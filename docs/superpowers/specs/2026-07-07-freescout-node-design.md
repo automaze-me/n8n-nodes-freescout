@@ -13,7 +13,10 @@ API base URL is user-configured, never a fixed preset.
 
 Reference material:
 - Official API docs: <https://api-docs.freescout.net/> (thin in parts).
-- FreeScout source on GitHub for gaps where docs are thin.
+- **Local module source** (`~/freescout/Modules`) — authoritative where the
+  docs are thin. Includes `ApiWebhooks` (API + webhooks: routes, events,
+  signature), plus `CustomFields`, `Tags`, `Workflows`, etc. Purchased modules
+  the user runs.
 - Existing private workflows (`~/n8n/n8n-workflows-privat`) as a reference for
   **real payload/response shapes and auth quirks only** — not for scoping.
 
@@ -46,6 +49,12 @@ Properties:
 - **FreeScout URL** (`baseUrl`, string, required) — e.g.
   `https://support.example.com`. Trailing slash normalized before use.
 - **API Key** (`apiKey`, string, `password: true`, required).
+- **App Key** (`appKey`, string, `password: true`, optional) — the FreeScout
+  instance's Laravel `APP_KEY` (exact value from `.env`, including any
+  `base64:` prefix). Required **only** for the Trigger node's signature
+  verification; the action node ignores it. Description in the UI explains this.
+  The webhook signing secret is derived as `md5(appKey . 'webhook_key')`
+  (see Trigger section).
 
 Auth (declarative generic):
 - Header `X-FreeScout-API-Key = {{$credentials.apiKey}}` (docs-recommended
@@ -93,44 +102,46 @@ absent). Errors surfaced clearly rather than hidden.
 
 ## Trigger node: `FreescoutTrigger`
 
-Events (multi-select `options`):
-`convo.created`, `convo.assigned`, `convo.moved`, `convo.status`,
+Events (multi-select `options`) — authoritative list from module source
+(`Modules/ApiWebhooks/Entities/Webhook.php`, `$events`):
+`convo.assigned`, `convo.created`, `convo.deleted`, `convo.deleted_forever`,
+`convo.restored`, `convo.moved`, `convo.status`,
 `convo.customer.reply.created`, `convo.agent.reply.created`,
-`convo.note.created`, `convo.deleted`, `customer.created`, `customer.updated`.
+`convo.note.created`, `customer.created`, `customer.updated`.
 
-Webhook lifecycle (`webhookMethods`):
+Webhook lifecycle (`webhookMethods`), routes confirmed from module
+`Http/routes.php`:
 - `checkExists` → `GET /api/webhooks`, match by target URL.
-- `create` → `POST /api/webhooks` with the n8n-provided webhook URL + selected
-  events.
+- `create` → `POST /api/webhooks` with `{ url, events }` (the n8n-provided
+  webhook URL + selected events). No per-webhook secret exists in the API.
 - `delete` → `DELETE /api/webhooks/{id}` on deactivation.
 
 ### Signature verification (ENFORCED — hard fail)
 
-FreeScout signs webhook deliveries with the `X-FreeScout-Signature` header
-(confirmed present via captured deliveries in reference workflows).
+Scheme pinned from module source (`Entities/Webhook.php::sign`/`getSecretKey`),
+so no empirical derivation is needed:
 
-The trigger **rejects** any delivery whose signature does not verify:
-- Compute the expected HMAC over the raw request body using the configured
-  secret; constant-time compare against the header.
-- On mismatch → respond `403` and do not emit an item.
+- Header: `X-FreeScout-Signature` (event name also sent in `X-FreeScout-Event`).
+- Value: `base64_encode( hash_hmac('sha1', body, secret, true) )`.
+- `body` = the **raw request body bytes** as received (FreeScout signs
+  `json_encode($params)`, i.e. the exact JSON it POSTs — so verifying against
+  the raw incoming body avoids any re-encoding mismatch).
+- `secret` = `md5( appKey . 'webhook_key' )`, where `appKey` = `config('app.key')`
+  = the instance's `.env` `APP_KEY` string verbatim (including any `base64:`
+  prefix). This is a **global instance secret**, not per-webhook and not the
+  API key.
 
-**Open implementation detail (must be resolved before enforcing):** the exact
-HMAC parameters — algorithm (sha1 vs sha256), the secret used (per-webhook
-secret vs. site app key), and encoding (base64 vs hex) — are **not documented**
-and the API/Webhooks module source is not public. These MUST be derived
-empirically before the hard check ships:
-1. Register a webhook against a live FreeScout instance with a known secret.
-2. Capture a real delivery (body + `X-FreeScout-Signature`).
-3. Reproduce the signature locally to confirm algorithm/secret/encoding.
-4. Encode the confirmed scheme; add a unit test with the captured
-   body+signature+secret fixture so regressions are caught.
+Enforcement:
+- The trigger reads the raw body, computes the expected value, and does a
+  constant-time compare against the header.
+- On mismatch or missing header → respond `403` and emit nothing.
+- If **App Key** is not configured on the credential → the trigger errors on
+  activation with a clear message (verification cannot run, and silently
+  skipping it is not allowed since the check is hard).
 
-Until step 3 is confirmed, the check must not be silently weakened — if the
-scheme cannot be reproduced, that is a blocker to be raised, not bypassed.
-
-A `secret` field on the trigger (or a generated secret stored in static data)
-holds the signing secret used both when creating the webhook and when
-verifying.
+Testing: a unit test uses a fixture (known body + APP_KEY → expected header
+value, generated once from the pinned formula) to lock the scheme and catch
+regressions.
 
 ## Cross-cutting behavior
 
