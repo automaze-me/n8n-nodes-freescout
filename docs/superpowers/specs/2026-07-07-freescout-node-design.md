@@ -71,15 +71,21 @@ Node `requestDefaults`:
 
 ## Action node — resource / operation map (full coverage)
 
+Resource/operation map below is the **authoritative set of routes** confirmed
+from the module (`Modules/ApiWebhooks/Http/routes.php`). Note: the public
+api-docs site lists an Organizations resource and `/customers/{id}/organization`
+endpoints, but **these do not exist in the actual API module** and are excluded.
+There is also no single "Get Mailbox" route — only list + folders + custom
+fields.
+
 | Resource | Operations |
 |---|---|
 | **Conversation** | Create · Get · Get Many (search) · Update · Delete · Update Tags · Update Custom Fields · List Timelogs |
-| **Thread** | Create (type: `note` / `message` / `reply`; supports `state: draft`, attachments, `imported`) |
-| **Customer** | Create · Get · Get Many (email/phone/name search) · Update · Update Customer Fields · Get Organization · Update Organization · Delete Organization membership |
-| **Mailbox** | Get · Get Many · List Folders · List Custom Fields |
+| **Thread** | Create (type: `customer` / `message` / `note`; supports `state: draft`, `to`/`cc`/`bcc`, attachments, `imported`) |
+| **Customer** | Create · Get · Get Many (email/phone/name search) · Update · Update Customer Fields |
+| **Mailbox** | Get Many · List Folders · List Custom Fields |
 | **User** | Create · Get · Get Many · Delete |
 | **Tag** | Get Many |
-| **Organization** | Create · Get · Get Many · Update · Delete |
 | **Webhook** | Create · Get Many · Delete |
 
 ### Conversation search filters (Get Many)
@@ -95,11 +101,13 @@ mapped as query params. Exposed via a collection of optional filters.
 - Thread Create body: `type`, `text`, `user` (agent id), optional `state`,
   `attachments`, `imported`.
 
-### Module-dependent resources
-Organizations and custom-field endpoints depend on the corresponding FreeScout
-modules being installed. They are **included in v1** and documented in the
-README as requiring the relevant module (they return 404 if the module is
-absent). Errors surfaced clearly rather than hidden.
+### Module-dependent behavior
+The custom-field endpoints (`updateCustomFields`, `updateCustomerFields`,
+mailbox custom fields) require the **CustomFields** FreeScout module and the
+`tag` conversation filter requires the **Tags** module. These operations are
+included, but documented in the README as needing the relevant module; when a
+module is absent the API returns an error, which is surfaced clearly rather
+than hidden.
 
 ## Trigger node: `FreescoutTrigger`
 
