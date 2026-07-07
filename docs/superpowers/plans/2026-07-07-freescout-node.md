@@ -64,7 +64,8 @@ nodes/Freescout/Freescout.node.ts            action node: resource selector, req
 nodes/Freescout/GenericFunctions.ts          shared: normalizeBaseUrl, embedded-unwrap postReceive, pagination, presend body builders
 nodes/Freescout/resources/conversation/{index,create,get,getAll,update,delete,updateTags,updateCustomFields,timelogs}.ts
 nodes/Freescout/resources/thread/{index,create}.ts
-nodes/Freescout/resources/customer/{index,create,get,getAll,update,updateFields}.ts
+nodes/Freescout/resources/customer/{index,create,get,getAll,update,updateFields,getOrganization,setOrganization,removeOrganization}.ts
+nodes/Freescout/resources/organization/{index,create,get,getAll,update,delete}.ts  (CRM module)
 nodes/Freescout/resources/user/{index,create,get,getAll,delete}.ts
 nodes/Freescout/resources/mailbox/{index,getAll,folders,customFields}.ts
 nodes/Freescout/resources/tag/{index,getAll}.ts
@@ -382,6 +383,7 @@ import { NodeConnectionTypes, type INodeType, type INodeTypeDescription } from '
 import { conversationDescription } from './resources/conversation';
 import { threadDescription } from './resources/thread';
 import { customerDescription } from './resources/customer';
+import { organizationDescription } from './resources/organization';
 import { userDescription } from './resources/user';
 import { mailboxDescription } from './resources/mailbox';
 import { tagDescription } from './resources/tag';
@@ -418,6 +420,7 @@ export class Freescout implements INodeType {
 					{ name: 'Conversation', value: 'conversation' },
 					{ name: 'Thread', value: 'thread' },
 					{ name: 'Customer', value: 'customer' },
+					{ name: 'Organization', value: 'organization' },
 					{ name: 'User', value: 'user' },
 					{ name: 'Mailbox', value: 'mailbox' },
 					{ name: 'Tag', value: 'tag' },
@@ -428,6 +431,7 @@ export class Freescout implements INodeType {
 			...conversationDescription,
 			...threadDescription,
 			...customerDescription,
+			...organizationDescription,
 			...userDescription,
 			...mailboxDescription,
 			...tagDescription,
@@ -1033,11 +1037,12 @@ git commit -m "feat(node): thread resource"
 ### Task 6: Customer resource
 
 **Files:**
-- Create: `nodes/Freescout/resources/customer/{index,create,get,getAll,update,updateFields}.ts`
+- Create: `nodes/Freescout/resources/customer/{index,create,get,getAll,update,updateFields,getOrganization,setOrganization,removeOrganization}.ts`
 
 **Interfaces:**
 - Consumes: `embeddedPostReceive`, `buildCustomerObject`, `paginationFields`.
 - Produces: `customerDescription: INodeProperties[]`.
+- Note: `getOrganization`/`setOrganization`/`removeOrganization` require the CRM module.
 
 Field reference:
 - Create/Update (POST/PUT /customers[/{id}]): `firstName, lastName, phone, photoUrl, jobTitle, photoType, address(object), notes, company, emails(array), phones(array), socialProfiles(array), websites(array)`; plus convenience `email` (create). Update also `emails_add`.
@@ -1220,7 +1225,92 @@ export const customerUpdateFieldsDescription: INodeProperties[] = [
 ];
 ```
 
-- [ ] **Step 6: Create `index.ts`**
+- [ ] **Step 6: Create `getOrganization.ts` (CRM module)**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+
+const show = { resource: ['customer'], operation: ['getOrganization'] };
+
+export const customerGetOrganizationDescription: INodeProperties[] = [
+	{
+		displayName: 'Customer ID',
+		name: 'customerId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		description: "Get the customer's organization membership (requires the CRM module)",
+		routing: { request: { method: 'GET', url: '=/customers/{{$value}}/organization' } },
+	},
+];
+```
+
+- [ ] **Step 7: Create `setOrganization.ts` (CRM module)**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+
+const show = { resource: ['customer'], operation: ['setOrganization'] };
+
+export const customerSetOrganizationDescription: INodeProperties[] = [
+	{
+		displayName: 'Customer ID',
+		name: 'customerId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		description: 'Assign/update the customer organization membership (requires the CRM module)',
+		routing: { request: { method: 'PUT', url: '=/customers/{{$value}}/organization' } },
+	},
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'number',
+		default: 0,
+		required: true,
+		displayOptions: { show },
+		routing: { send: { type: 'body', property: 'organizationId' } },
+	},
+	{
+		displayName: 'Role',
+		name: 'role',
+		type: 'options',
+		options: [
+			{ name: 'Member', value: 'member' },
+			{ name: 'Manager', value: 'manager' },
+		],
+		default: 'member',
+		required: true,
+		displayOptions: { show },
+		routing: { send: { type: 'body', property: 'role' } },
+	},
+];
+```
+
+- [ ] **Step 8: Create `removeOrganization.ts` (CRM module)**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+
+const show = { resource: ['customer'], operation: ['removeOrganization'] };
+
+export const customerRemoveOrganizationDescription: INodeProperties[] = [
+	{
+		displayName: 'Customer ID',
+		name: 'customerId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		description: 'Remove the customer from its organization (requires the CRM module)',
+		routing: { request: { method: 'DELETE', url: '=/customers/{{$value}}/organization' } },
+	},
+];
+```
+
+- [ ] **Step 9: Create `index.ts`**
 
 ```typescript
 import type { INodeProperties } from 'n8n-workflow';
@@ -1229,6 +1319,9 @@ import { customerGetDescription } from './get';
 import { customerGetAllDescription } from './getAll';
 import { customerUpdateDescription } from './update';
 import { customerUpdateFieldsDescription } from './updateFields';
+import { customerGetOrganizationDescription } from './getOrganization';
+import { customerSetOrganizationDescription } from './setOrganization';
+import { customerRemoveOrganizationDescription } from './removeOrganization';
 
 const show = { resource: ['customer'] };
 
@@ -1245,6 +1338,9 @@ export const customerDescription: INodeProperties[] = [
 			{ name: 'Get Many', value: 'getAll', action: 'Get many customers' },
 			{ name: 'Update', value: 'update', action: 'Update a customer' },
 			{ name: 'Update Customer Fields', value: 'updateCustomerFields', action: 'Update customer fields' },
+			{ name: 'Get Organization', value: 'getOrganization', action: 'Get customer organization' },
+			{ name: 'Set Organization', value: 'setOrganization', action: 'Set customer organization' },
+			{ name: 'Remove Organization', value: 'removeOrganization', action: 'Remove customer organization' },
 		],
 		default: 'create',
 	},
@@ -1253,14 +1349,20 @@ export const customerDescription: INodeProperties[] = [
 	...customerGetAllDescription,
 	...customerUpdateDescription,
 	...customerUpdateFieldsDescription,
+	...customerGetOrganizationDescription,
+	...customerSetOrganizationDescription,
+	...customerRemoveOrganizationDescription,
 ];
 ```
 
-- [ ] **Step 7: Commit**
+The last three operations require the CRM (Customers Management) module; when
+it is absent the API returns an error surfaced by n8n.
+
+- [ ] **Step 10: Commit**
 
 ```bash
 git add nodes/Freescout/resources/customer
-git commit -m "feat(node): customer resource"
+git commit -m "feat(node): customer resource incl. organization membership (CRM)"
 ```
 
 ---
@@ -1666,6 +1768,230 @@ export const tagDescription: INodeProperties[] = [
 ```bash
 git add nodes/Freescout/resources/tag
 git commit -m "feat(node): tag resource"
+```
+
+---
+
+### Task 9A: Organization resource (CRM module)
+
+**Files:**
+- Create: `nodes/Freescout/resources/organization/{index,create,get,getAll,update,delete}.ts`
+
+**Interfaces:**
+- Consumes: `embeddedPostReceive`, `paginationFields`.
+- Produces: `organizationDescription: INodeProperties[]` (imported by node in Task 3).
+
+Field reference: the CRM (Customers Management) module is closed source and not
+available locally. Only `name` (create/update) is documented. All other fields
+are exposed through a raw **Additional Fields (JSON)** passthrough merged into
+the request body by a local preSend — no field names are fabricated. The
+`_embedded` list key is assumed to be `organizations` (verify against a live
+CRM install; see Open Items).
+
+- [ ] **Step 1: Create `create.ts`**
+
+```typescript
+import type {
+	IDataObject,
+	IExecuteSingleFunctions,
+	IHttpRequestOptions,
+	INodeProperties,
+} from 'n8n-workflow';
+
+const show = { resource: ['organization'], operation: ['create'] };
+
+/** Merge the raw "Additional Fields (JSON)" parameter into the request body. */
+export async function presendOrganizationJson(
+	this: IExecuteSingleFunctions,
+	requestOptions: IHttpRequestOptions,
+): Promise<IHttpRequestOptions> {
+	const raw = this.getNodeParameter('additionalFieldsJson', '{}') as string;
+	const body = (requestOptions.body as IDataObject) ?? {};
+	if (raw && raw.trim() && raw.trim() !== '{}') {
+		const parsed = JSON.parse(raw) as IDataObject;
+		requestOptions.body = { ...body, ...parsed };
+	}
+	return requestOptions;
+}
+
+export const organizationCreateDescription: INodeProperties[] = [
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		routing: {
+			request: { method: 'POST', url: '/organizations' },
+			send: { type: 'body', property: 'name', preSend: [presendOrganizationJson] },
+		},
+	},
+	{
+		displayName: 'Additional Fields (JSON)',
+		name: 'additionalFieldsJson',
+		type: 'json',
+		default: '{}',
+		displayOptions: { show },
+		description:
+			'Optional extra organization fields as a JSON object, merged into the request body (CRM module specific)',
+	},
+];
+```
+
+- [ ] **Step 2: Create `get.ts`**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+import { embeddedPostReceive } from '../../GenericFunctions';
+
+const show = { resource: ['organization'], operation: ['get'] };
+
+export const organizationGetDescription: INodeProperties[] = [
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		routing: {
+			request: { method: 'GET', url: '=/organizations/{{$value}}' },
+			output: { postReceive: [embeddedPostReceive('organizations')] },
+		},
+	},
+];
+```
+
+- [ ] **Step 3: Create `getAll.ts`**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+import { embeddedPostReceive } from '../../GenericFunctions';
+import { paginationFields } from '../shared';
+
+const show = { resource: ['organization'], operation: ['getAll'] };
+
+export const organizationGetAllDescription: INodeProperties[] = [
+	...paginationFields('organization', 'getAll'),
+	{
+		displayName: 'Operation Routing',
+		name: 'getAllRouting',
+		type: 'hidden',
+		default: '',
+		displayOptions: { show },
+		routing: {
+			request: { method: 'GET', url: '/organizations' },
+			output: { postReceive: [embeddedPostReceive('organizations')] },
+		},
+	},
+];
+```
+
+- [ ] **Step 4: Create `update.ts`**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+import { presendOrganizationJson } from './create';
+
+const show = { resource: ['organization'], operation: ['update'] };
+
+export const organizationUpdateDescription: INodeProperties[] = [
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		routing: {
+			request: { method: 'PUT', url: '=/organizations/{{$value}}' },
+			send: { preSend: [presendOrganizationJson] },
+		},
+	},
+	{
+		displayName: 'Name',
+		name: 'name',
+		type: 'string',
+		default: '',
+		displayOptions: { show },
+		routing: { send: { type: 'body', property: 'name' } },
+	},
+	{
+		displayName: 'Additional Fields (JSON)',
+		name: 'additionalFieldsJson',
+		type: 'json',
+		default: '{}',
+		displayOptions: { show },
+		description: 'Optional extra organization fields as a JSON object, merged into the request body',
+	},
+];
+```
+
+- [ ] **Step 5: Create `delete.ts`**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+
+const show = { resource: ['organization'], operation: ['delete'] };
+
+export const organizationDeleteDescription: INodeProperties[] = [
+	{
+		displayName: 'Organization ID',
+		name: 'organizationId',
+		type: 'string',
+		default: '',
+		required: true,
+		displayOptions: { show },
+		routing: { request: { method: 'DELETE', url: '=/organizations/{{$value}}' } },
+	},
+];
+```
+
+- [ ] **Step 6: Create `index.ts`**
+
+```typescript
+import type { INodeProperties } from 'n8n-workflow';
+import { organizationCreateDescription } from './create';
+import { organizationGetDescription } from './get';
+import { organizationGetAllDescription } from './getAll';
+import { organizationUpdateDescription } from './update';
+import { organizationDeleteDescription } from './delete';
+
+const show = { resource: ['organization'] };
+
+export const organizationDescription: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: { show },
+		options: [
+			{ name: 'Create', value: 'create', action: 'Create an organization' },
+			{ name: 'Get', value: 'get', action: 'Get an organization' },
+			{ name: 'Get Many', value: 'getAll', action: 'Get many organizations' },
+			{ name: 'Update', value: 'update', action: 'Update an organization' },
+			{ name: 'Delete', value: 'delete', action: 'Delete an organization' },
+		],
+		default: 'create',
+	},
+	...organizationCreateDescription,
+	...organizationGetDescription,
+	...organizationGetAllDescription,
+	...organizationUpdateDescription,
+	...organizationDeleteDescription,
+];
+```
+
+The whole resource requires the CRM (Customers Management) module; without it
+the API returns an error surfaced by n8n.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add nodes/Freescout/resources/organization
+git commit -m "feat(node): organization resource (CRM module)"
 ```
 
 ---
@@ -2172,11 +2498,13 @@ git commit -m "feat(trigger): webhook lifecycle and delivery with optional signa
 
 Include: install instructions, credential setup (FreeScout URL, API key from
 Manage → API Keys, and the optional App Key with the `.env` `APP_KEY` note for
-trigger signature verification), the full resource/operation table, a note that
-custom-field operations require the CustomFields module and the `tag` filter
-requires the Tags module, and a Trigger section explaining events, auto
-webhook registration, and the signature behavior (verified only when App Key
-set).
+trigger signature verification), the full resource/operation table, a
+module-requirements note (custom-field operations require the CustomFields
+module; the `tag` conversation filter requires the Tags module; the
+Organization resource and customer organization-membership operations require
+the CRM / Customers Management module), and a Trigger section explaining events,
+auto webhook registration, and the signature behavior (verified only when App
+Key set).
 
 - [ ] **Step 2: Update `CHANGELOG.md`**
 
@@ -2186,8 +2514,9 @@ set).
 ## 0.2.0 - 2026-07-07
 
 ### Added
-- FreeScout action node covering Conversations, Threads, Customers, Users,
-  Mailboxes, Tags and Webhooks (full API coverage).
+- FreeScout action node covering Conversations, Threads, Customers,
+  Organizations (CRM module), Users, Mailboxes, Tags and Webhooks (full API
+  coverage).
 - FreeScout Trigger node with automatic webhook registration and optional
   `X-FreeScout-Signature` verification (enabled by setting the credential App Key).
 - Dynamic base URL and API key credential with connection test.
@@ -2223,6 +2552,13 @@ git commit -m "docs: README and CHANGELOG; bump to 0.2.0"
 3. **`_embedded` key casing** for mailbox custom fields (`customFields` vs
    `custom_fields`).
 4. **`req.rawBody` availability** for signature verification (see Task 13 note).
+5. **Organization/CRM specifics** (Task 9A, Customer membership in Task 6):
+   confirm against a live CRM install — the `_embedded` list key
+   (`organizations` assumed), whether create/update accept fields beyond `name`
+   (covered by the JSON passthrough regardless), the membership `role` enum
+   values (`member`/`manager` assumed), and the exact membership request/response
+   shape. These are unverifiable locally because the CRM module is closed source
+   and not installed.
 
-Each is verified in that task's manual test step; none changes the plan's
-structure.
+Items 1–4 are verified in their task's manual test step; item 5 needs a
+FreeScout install with the CRM module. None changes the plan's structure.

@@ -71,22 +71,33 @@ Node `requestDefaults`:
 
 ## Action node — resource / operation map (full coverage)
 
-Resource/operation map below is the **authoritative set of routes** confirmed
-from the module (`Modules/ApiWebhooks/Http/routes.php`). Note: the public
-api-docs site lists an Organizations resource and `/customers/{id}/organization`
-endpoints, but **these do not exist in the actual API module** and are excluded.
-There is also no single "Get Mailbox" route — only list + folders + custom
-fields.
+The Conversation…Webhook routes below are confirmed verbatim from the
+**ApiWebhooks** module (`Http/routes.php`). The **Organization** routes and the
+customer↔organization membership routes come from the separate **CRM**
+(Customers Management) module; they are documented on the public api-docs site
+but the module source is not available locally, so their request-body fields
+are only partially documented (see note below). Organizations are included
+because this package serves any FreeScout install, not only ones without CRM.
+There is no single "Get Mailbox" route — only list + folders + custom fields.
 
 | Resource | Operations |
 |---|---|
 | **Conversation** | Create · Get · Get Many (search) · Update · Delete · Update Tags · Update Custom Fields · List Timelogs |
 | **Thread** | Create (type: `customer` / `message` / `note`; supports `state: draft`, `to`/`cc`/`bcc`, attachments, `imported`) |
-| **Customer** | Create · Get · Get Many (email/phone/name search) · Update · Update Customer Fields |
+| **Customer** | Create · Get · Get Many (email/phone/name search) · Update · Update Customer Fields · Get Organization · Set Organization · Remove Organization |
+| **Organization** | Create · Get · Get Many · Update · Delete *(CRM module)* |
 | **Mailbox** | Get Many · List Folders · List Custom Fields |
 | **User** | Create · Get · Get Many · Delete |
 | **Tag** | Get Many |
 | **Webhook** | Create · Get Many · Delete |
+
+**Organization field uncertainty (CRM module).** Confirmed from docs:
+create/update take `name`; `PUT /customers/{id}/organization` takes
+`{ organizationId, role }` where `role` ∈ `member`/`manager`. Other
+organization fields are not documented and the module is not available to read.
+So the Organization create/update UI exposes the confirmed `name` field plus a
+**raw "Additional Fields (JSON)" passthrough** for any module-specific fields,
+rather than fabricating field names. Documented as CRM-module-dependent.
 
 ### Conversation search filters (Get Many)
 `mailboxId`, `folderId`, `status`, `assignedTo`, `customerId`, `customerEmail`,
@@ -102,12 +113,15 @@ mapped as query params. Exposed via a collection of optional filters.
   `attachments`, `imported`.
 
 ### Module-dependent behavior
-The custom-field endpoints (`updateCustomFields`, `updateCustomerFields`,
-mailbox custom fields) require the **CustomFields** FreeScout module and the
-`tag` conversation filter requires the **Tags** module. These operations are
-included, but documented in the README as needing the relevant module; when a
-module is absent the API returns an error, which is surfaced clearly rather
-than hidden.
+- Custom-field endpoints (`updateCustomFields`, `updateCustomerFields`, mailbox
+  custom fields) require the **CustomFields** module.
+- The `tag` conversation filter requires the **Tags** module.
+- The **Organization** resource and customer↔organization membership operations
+  require the **CRM** (Customers Management) module.
+
+All are included but documented in the README as needing the relevant module;
+when a module is absent the API returns an error, which is surfaced clearly
+rather than hidden.
 
 ## Trigger node: `FreescoutTrigger`
 
