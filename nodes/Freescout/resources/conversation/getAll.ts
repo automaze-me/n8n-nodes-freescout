@@ -26,6 +26,8 @@ export const conversationGetAllDescription: INodeProperties[] = [
 			{ displayName: 'Number', name: 'number', type: 'string', default: '', routing: { send: { type: 'query', property: 'number' } } },
 			{ displayName: 'Subject', name: 'subject', type: 'string', default: '', routing: { send: { type: 'query', property: 'subject' } } },
 			{ displayName: 'Tag', name: 'tag', type: 'string', default: '', routing: { send: { type: 'query', property: 'tag' } } },
+			{ displayName: 'Created By User ID', name: 'createdByUserId', type: 'string', default: '', routing: { send: { type: 'query', property: 'createdByUserId' } } },
+			{ displayName: 'Created By Customer ID', name: 'createdByCustomerId', type: 'string', default: '', routing: { send: { type: 'query', property: 'createdByCustomerId' } } },
 			{ displayName: 'Created Since', name: 'createdSince', type: 'dateTime', default: '', routing: { send: { type: 'query', property: 'createdSince' } } },
 			{ displayName: 'Updated Since', name: 'updatedSince', type: 'dateTime', default: '', routing: { send: { type: 'query', property: 'updatedSince' } } },
 			{ displayName: 'Sort Field', name: 'sortField', type: 'string', default: '', description: 'createdAt, mailboxId, number, subject, updatedAt, waitingSince', routing: { send: { type: 'query', property: 'sortField' } } },
