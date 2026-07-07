@@ -51,10 +51,11 @@ Properties:
 - **API Key** (`apiKey`, string, `password: true`, required).
 - **App Key** (`appKey`, string, `password: true`, optional) — the FreeScout
   instance's Laravel `APP_KEY` (exact value from `.env`, including any
-  `base64:` prefix). Required **only** for the Trigger node's signature
-  verification; the action node ignores it. Description in the UI explains this.
-  The webhook signing secret is derived as `md5(appKey . 'webhook_key')`
-  (see Trigger section).
+  `base64:` prefix). Used **only** by the Trigger node: providing it **enables**
+  webhook signature verification; leaving it blank means the Trigger accepts
+  deliveries unverified. The action node ignores it. Description in the UI
+  explains this. The webhook signing secret is derived as
+  `md5(appKey . 'webhook_key')` (see Trigger section).
 
 Auth (declarative generic):
 - Header `X-FreeScout-API-Key = {{$credentials.apiKey}}` (docs-recommended
@@ -116,7 +117,7 @@ Webhook lifecycle (`webhookMethods`), routes confirmed from module
   webhook URL + selected events). No per-webhook secret exists in the API.
 - `delete` → `DELETE /api/webhooks/{id}` on deactivation.
 
-### Signature verification (ENFORCED — hard fail)
+### Signature verification (OPTIONAL — enabled by configuring App Key)
 
 Scheme pinned from module source (`Entities/Webhook.php::sign`/`getSecretKey`),
 so no empirical derivation is needed:
@@ -131,17 +132,18 @@ so no empirical derivation is needed:
   prefix). This is a **global instance secret**, not per-webhook and not the
   API key.
 
-Enforcement:
-- The trigger reads the raw body, computes the expected value, and does a
-  constant-time compare against the header.
-- On mismatch or missing header → respond `403` and emit nothing.
-- If **App Key** is not configured on the credential → the trigger errors on
-  activation with a clear message (verification cannot run, and silently
-  skipping it is not allowed since the check is hard).
+Behavior (optional check):
+- **App Key configured** → the trigger reads the raw body, computes the
+  expected value, and does a constant-time compare against the header. On
+  mismatch or missing header → respond `403` and emit nothing.
+- **App Key not configured** → verification is skipped; deliveries are accepted
+  unverified. The node documents this trade-off so users understand that
+  omitting the App Key means unauthenticated webhook calls are trusted.
 
 Testing: a unit test uses a fixture (known body + APP_KEY → expected header
 value, generated once from the pinned formula) to lock the scheme and catch
-regressions.
+regressions. A second case asserts that with no App Key the delivery is
+accepted without verification.
 
 ## Cross-cutting behavior
 
