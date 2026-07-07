@@ -6,7 +6,9 @@
 
 **Architecture:** One declarative action node (`Freescout`) using n8n `routing` for all CRUD across 7 resources, a shared `GenericFunctions.ts` for response-envelope unwrapping / pagination / pre-send body builders, one programmatic Trigger node (`FreescoutTrigger`) that registers/deletes FreeScout webhooks and optionally verifies the `X-FreeScout-Signature` HMAC, and a `FreescoutApi` credential holding a dynamic base URL + API key + optional app key.
 
-**Tech Stack:** TypeScript, `n8n-workflow`, `@n8n/node-cli` (`n8n-node build`/`lint`/`dev`), Node's `crypto` for HMAC. Node built against `n8nNodesApiVersion: 1`, `strict: true`.
+**Tech Stack:** TypeScript, `n8n-workflow`, `@n8n/node-cli` (`n8n-node build`/`lint`/`dev`), **Vitest** for unit tests (the runner the official `@n8n/node-cli` standardizes on), Node's `crypto` for HMAC. Node built against `n8nNodesApiVersion: 1`, `strict: true`.
+
+**Test runner:** Vitest. Added as a direct devDependency with `"test": "vitest run"` in `package.json` (Task 2 sets this up). Test files import `{ describe, it, expect } from 'vitest'` (no global-config needed). Build excludes test files (`tsconfig` `exclude`).
 
 ## Global Constraints
 
@@ -184,9 +186,28 @@ git commit -m "feat(credential): dynamic base URL, API key, optional app key"
   - `presendConversationBody` / `presendThreadBody` — `PreSendAction`s that assemble nested bodies from flat node parameters.
 - Consumes: credential from Task 1.
 
+- [ ] **Step 0: Set up Vitest**
+
+Install the runner and wire the script + build exclusion:
+
+```bash
+npm install -D vitest
+```
+
+Add to `package.json` `scripts`: `"test": "vitest run"`.
+
+Add an `exclude` array to `tsconfig.json` so tests never emit into `dist`:
+
+```json
+"exclude": ["**/*.test.ts", "**/__tests__/**", "dist", "node_modules"]
+```
+
+Verify: `npx vitest run` exits cleanly (reports "no test files" is fine at this point).
+
 - [ ] **Step 1: Write failing tests**
 
 ```typescript
+import { describe, it, expect } from 'vitest';
 import { normalizeBaseUrl, buildCustomerObject } from '../GenericFunctions';
 
 describe('normalizeBaseUrl', () => {
@@ -218,7 +239,7 @@ describe('buildCustomerObject', () => {
 
 - [ ] **Step 2: Run tests, verify they fail**
 
-Run: `npx jest nodes/Freescout/__tests__/genericFunctions.test.ts`
+Run: `npx vitest run nodes/Freescout/__tests__/genericFunctions.test.ts`
 Expected: FAIL — module/functions not found.
 
 - [ ] **Step 3: Implement `GenericFunctions.ts`**
@@ -297,7 +318,7 @@ export async function presendThreadBody(
 
 - [ ] **Step 4: Run tests, verify they pass**
 
-Run: `npx jest nodes/Freescout/__tests__/genericFunctions.test.ts`
+Run: `npx vitest run nodes/Freescout/__tests__/genericFunctions.test.ts`
 Expected: PASS (6 assertions).
 
 - [ ] **Step 5: Commit**
@@ -2213,6 +2234,7 @@ git commit -m "chore: register both nodes and fix package metadata"
 - [ ] **Step 1: Write failing tests (fixture generated from the pinned formula)**
 
 ```typescript
+import { describe, it, expect } from 'vitest';
 import { webhookSecret, computeSignature, verifySignature } from '../GenericFunctions';
 import { createHash, createHmac } from 'crypto';
 
@@ -2247,7 +2269,7 @@ describe('webhook signature', () => {
 
 - [ ] **Step 2: Run tests, verify they fail**
 
-Run: `npx jest nodes/FreescoutTrigger/__tests__/signature.test.ts`
+Run: `npx vitest run nodes/FreescoutTrigger/__tests__/signature.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement `GenericFunctions.ts`**
@@ -2281,7 +2303,7 @@ export function verifySignature(
 
 - [ ] **Step 4: Run tests, verify they pass**
 
-Run: `npx jest nodes/FreescoutTrigger/__tests__/signature.test.ts`
+Run: `npx vitest run nodes/FreescoutTrigger/__tests__/signature.test.ts`
 Expected: PASS (6 assertions).
 
 - [ ] **Step 5: Commit**
@@ -2528,7 +2550,7 @@ Set `package.json` `version` to `0.2.0`.
 
 - [ ] **Step 4: Final full verification**
 
-Run: `npm run build && npm run lint && npx jest`
+Run: `npm run build && npm run lint && npm test`
 Expected: build + lint clean; all unit tests pass.
 
 - [ ] **Step 5: Commit**
