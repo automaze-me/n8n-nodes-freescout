@@ -7,6 +7,8 @@ dated release when a version is cut.
 
 ## [Unreleased]
 
+## 0.4.0 - 2026-07-08
+
 ### Added
 
 - **Conversation → Create**: the initial thread(s) can now be built with an **Add Thread** fields editor — pick Message / Note / Customer, enter the text and the agent or customer, and add multiple threads — instead of hand-writing JSON. A raw-JSON mode is still available via the **Thread Input** toggle.
