@@ -7,6 +7,8 @@ dated release when a version is cut.
 
 ## [Unreleased]
 
+## 0.2.2 - 2026-07-08
+
 ### Changed
 
 - **The package is now published as `n8n-nodes-freescout`** (it was briefly `@automaze.me/n8n-nodes-freescout`). n8n could not load the scoped version — it showed "Unrecognized node type" — because n8n doesn't support a dot in a package's scope. If you installed the `@automaze.me/…` version, please uninstall it and install **`n8n-nodes-freescout`** instead.
