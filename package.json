@@ -5,7 +5,9 @@
   "license": "MIT",
   "homepage": "https://github.com/joernbungartz/n8n-nodes-freescout",
   "keywords": [
-    "n8n-community-node-package"
+    "n8n-community-node-package",
+    "freescout",
+    "helpdesk"
   ],
   "author": {
     "name": "Jörn Bungartz",
@@ -35,7 +37,8 @@
       "dist/credentials/FreescoutApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Freescout/Freescout.node.js"
+      "dist/nodes/Freescout/Freescout.node.js",
+      "dist/nodes/FreescoutTrigger/FreescoutTrigger.node.js"
     ]
   },
   "devDependencies": {
