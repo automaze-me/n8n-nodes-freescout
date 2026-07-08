@@ -74,21 +74,39 @@ export const conversationCreateDescription: INodeProperties[] = [
 			{
 				name: 'thread',
 				displayName: 'Thread',
-				// Fields are kept alphabetical by displayName to satisfy the n8n
-				// lint rule (node-param-fixed-collection-type-unsorted-items).
+				// Only 4 inline fields, so they are NOT force-alphabetized by the n8n
+				// lint rule (node-param-fixed-collection-type-unsorted-items only
+				// applies at 5+ items) — this lets "Options" sit last. Keep it at 4:
+				// adding a 5th inline field would trigger alphabetical reordering.
 				// NOTE: do not run `n8n-node lint --fix` on this file — its
-				// fixed-collection sort fixer is destructive (it strips
-				// displayOptions/typeOptions from these entries).
+				// fixed-collection sort fixer is destructive.
 				values: [
 					{
-						displayName: 'Customer Email',
-						name: 'customerEmail',
+						displayName: 'Type',
+						name: 'type',
+						type: 'options',
+						options: [
+							{ name: 'Message (User Reply)', value: 'message' },
+							{ name: 'Note (Internal Note)', value: 'note' },
+							{ name: 'Customer (Customer Reply)', value: 'customer' },
+						],
+						default: 'message',
+					},
+					{
+						displayName: 'Text',
+						name: 'text',
 						type: 'string',
-						placeholder: 'name@email.com',
+						typeOptions: { rows: 3 },
 						default: '',
-						displayOptions: { show: { type: ['customer'] } },
-						description:
-							'Customer sending the reply; defaults to the conversation customer if left blank',
+						description: 'The thread body',
+					},
+					{
+						displayName: 'User ID',
+						name: 'user',
+						type: 'number',
+						default: 0,
+						displayOptions: { show: { type: ['message', 'note'] } },
+						description: 'ID of the agent adding the thread (required for message/note)',
 					},
 					{
 						displayName: 'Options',
@@ -114,6 +132,15 @@ export const conversationCreateDescription: INodeProperties[] = [
 								description: 'CC email addresses',
 							},
 							{
+								displayName: 'Customer Email',
+								name: 'customerEmail',
+								type: 'string',
+								placeholder: 'name@email.com',
+								default: '',
+								description:
+									'For a customer reply: the customer sending it; defaults to the conversation customer if left blank',
+							},
+							{
 								displayName: 'Imported',
 								name: 'imported',
 								type: 'boolean',
@@ -132,33 +159,6 @@ export const conversationCreateDescription: INodeProperties[] = [
 								default: 'published',
 							},
 						],
-					},
-					{
-						displayName: 'Text',
-						name: 'text',
-						type: 'string',
-						typeOptions: { rows: 3 },
-						default: '',
-						description: 'The thread body',
-					},
-					{
-						displayName: 'Type',
-						name: 'type',
-						type: 'options',
-						options: [
-							{ name: 'Message (User Reply)', value: 'message' },
-							{ name: 'Note (Internal Note)', value: 'note' },
-							{ name: 'Customer (Customer Reply)', value: 'customer' },
-						],
-						default: 'message',
-					},
-					{
-						displayName: 'User ID',
-						name: 'user',
-						type: 'number',
-						default: 0,
-						displayOptions: { show: { type: ['message', 'note'] } },
-						description: 'ID of the agent adding the thread (required for message/note)',
 					},
 				],
 			},

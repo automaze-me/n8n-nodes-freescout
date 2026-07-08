@@ -53,16 +53,16 @@ export function embeddedPostReceive(key: string) {
  * email is given; `cc`/`bcc` only when non-empty).
  */
 export function buildThread(entry: IDataObject): IDataObject {
+	// Customer Email / State / CC / BCC / Imported live in a per-thread "Options"
+	// collection (the "Add option" button), so they are only present when added.
+	const opts = (entry.options as IDataObject) ?? {};
 	const thread: IDataObject = { type: entry.type, text: entry.text };
 	if (entry.type === 'customer') {
-		const email = ((entry.customerEmail as string) ?? '').trim();
+		const email = ((opts.customerEmail as string) ?? '').trim();
 		if (email) thread.customer = { email };
 	} else if (typeof entry.user === 'number' && entry.user > 0) {
 		thread.user = entry.user;
 	}
-	// State / CC / BCC / Imported live in a per-thread "Options" collection
-	// (the "Add option" button), so they are only present when the user added them.
-	const opts = (entry.options as IDataObject) ?? {};
 	if (opts.state) thread.state = opts.state;
 	if (opts.imported === true) thread.imported = true;
 	for (const key of ['cc', 'bcc'] as const) {

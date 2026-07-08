@@ -100,8 +100,10 @@ describe('buildThread', () => {
 		});
 	});
 
-	it('builds a customer thread with a nested customer email', () => {
-		expect(buildThread({ type: 'customer', text: 'Reply', customerEmail: 'm@x.io' })).toEqual({
+	it('builds a customer thread with a nested customer email (from options)', () => {
+		expect(
+			buildThread({ type: 'customer', text: 'Reply', options: { customerEmail: 'm@x.io' } }),
+		).toEqual({
 			type: 'customer',
 			text: 'Reply',
 			customer: { email: 'm@x.io' },
@@ -109,7 +111,7 @@ describe('buildThread', () => {
 	});
 
 	it('omits customer when no email given (falls back to conversation customer server-side)', () => {
-		expect(buildThread({ type: 'customer', text: 'Reply', customerEmail: '' })).toEqual({
+		expect(buildThread({ type: 'customer', text: 'Reply' })).toEqual({
 			type: 'customer',
 			text: 'Reply',
 		});
