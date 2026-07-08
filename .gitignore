@@ -1,2 +1,6 @@
 dist
 node_modules
+
+# scratch / preview artifacts
+.playwright-mcp/
+fs-icon-preview.png
