@@ -7,6 +7,8 @@ dated release when a version is cut.
 
 ## [Unreleased]
 
+## 0.2.1 - 2026-07-08
+
 ### Fixed
 
 - 0.2.0 was published with a broken build — the compiled node files were left out of the package, so n8n showed "The specified package could not be loaded" on install. This release fixes the packaging; install 0.2.1 or later.
