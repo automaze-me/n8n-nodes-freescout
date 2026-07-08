@@ -6,7 +6,9 @@
 
 **Architecture:** One declarative action node (`Freescout`) using n8n `routing` for all CRUD across 7 resources, a shared `GenericFunctions.ts` for response-envelope unwrapping / pagination / pre-send body builders, one programmatic Trigger node (`FreescoutTrigger`) that registers/deletes FreeScout webhooks and optionally verifies the `X-FreeScout-Signature` HMAC, and a `FreescoutApi` credential holding a dynamic base URL + API key + optional app key.
 
-**Tech Stack:** TypeScript, `n8n-workflow`, `@n8n/node-cli` (`n8n-node build`/`lint`/`dev`), Node's `crypto` for HMAC. Node built against `n8nNodesApiVersion: 1`, `strict: true`.
+**Tech Stack:** TypeScript, `n8n-workflow`, `@n8n/node-cli` (`n8n-node build`/`lint`/`dev`), **Vitest** for unit tests (the runner the official `@n8n/node-cli` standardizes on), Node's `crypto` for HMAC. Node built against `n8nNodesApiVersion: 1`, `strict: true`.
+
+**Test runner:** Vitest, configured for Cloud-eligible strict mode. `n8n.strict` MUST stay `true` and `eslint.config.mjs` MUST remain the default (`export default config;`) — disabling strict forfeits n8n Cloud verification. n8n's lint bans importing `vitest` in any `.ts` file, so tests use **Vitest globals**: a root `vitest.config.mjs` (a `.mjs`, outside the `**/*.ts` lint glob) sets `test.globals: true`, and test files do NOT import from `'vitest'` (they use global `describe`/`it`/`expect`). Test files avoid `any` (use `as unknown as <Type>` with real `n8n-workflow` types). Build excludes test files (`tsconfig` `exclude`). `crypto`/`node:crypto` are allowlisted imports.
 
 ## Global Constraints
 
@@ -184,9 +186,28 @@ git commit -m "feat(credential): dynamic base URL, API key, optional app key"
   - `presendConversationBody` / `presendThreadBody` — `PreSendAction`s that assemble nested bodies from flat node parameters.
 - Consumes: credential from Task 1.
 
+- [ ] **Step 0: Set up Vitest**
+
+Install the runner and wire the script + build exclusion:
+
+```bash
+npm install -D vitest
+```
+
+Add to `package.json` `scripts`: `"test": "vitest run"`.
+
+Add an `exclude` array to `tsconfig.json` so tests never emit into `dist`:
+
+```json
+"exclude": ["**/*.test.ts", "**/__tests__/**", "dist", "node_modules"]
+```
+
+Verify: `npx vitest run` exits cleanly (reports "no test files" is fine at this point).
+
 - [ ] **Step 1: Write failing tests**
 
 ```typescript
+import { describe, it, expect } from 'vitest';
 import { normalizeBaseUrl, buildCustomerObject } from '../GenericFunctions';
 
 describe('normalizeBaseUrl', () => {
@@ -218,7 +239,7 @@ describe('buildCustomerObject', () => {
 
 - [ ] **Step 2: Run tests, verify they fail**
 
-Run: `npx jest nodes/Freescout/__tests__/genericFunctions.test.ts`
+Run: `npx vitest run nodes/Freescout/__tests__/genericFunctions.test.ts`
 Expected: FAIL — module/functions not found.
 
 - [ ] **Step 3: Implement `GenericFunctions.ts`**
@@ -297,7 +318,7 @@ export async function presendThreadBody(
 
 - [ ] **Step 4: Run tests, verify they pass**
 
-Run: `npx jest nodes/Freescout/__tests__/genericFunctions.test.ts`
+Run: `npx vitest run nodes/Freescout/__tests__/genericFunctions.test.ts`
 Expected: PASS (6 assertions).
 
 - [ ] **Step 5: Commit**
@@ -2213,6 +2234,7 @@ git commit -m "chore: register both nodes and fix package metadata"
 - [ ] **Step 1: Write failing tests (fixture generated from the pinned formula)**
 
 ```typescript
+// No `vitest` import — globals are enabled via vitest.config.mjs (strict mode bans the import).
 import { webhookSecret, computeSignature, verifySignature } from '../GenericFunctions';
 import { createHash, createHmac } from 'crypto';
 
@@ -2247,7 +2269,7 @@ describe('webhook signature', () => {
 
 - [ ] **Step 2: Run tests, verify they fail**
 
-Run: `npx jest nodes/FreescoutTrigger/__tests__/signature.test.ts`
+Run: `npx vitest run nodes/FreescoutTrigger/__tests__/signature.test.ts`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement `GenericFunctions.ts`**
@@ -2281,7 +2303,7 @@ export function verifySignature(
 
 - [ ] **Step 4: Run tests, verify they pass**
 
-Run: `npx jest nodes/FreescoutTrigger/__tests__/signature.test.ts`
+Run: `npx vitest run nodes/FreescoutTrigger/__tests__/signature.test.ts`
 Expected: PASS (6 assertions).
 
 - [ ] **Step 5: Commit**
@@ -2528,7 +2550,7 @@ Set `package.json` `version` to `0.2.0`.
 
 - [ ] **Step 4: Final full verification**
 
-Run: `npm run build && npm run lint && npx jest`
+Run: `npm run build && npm run lint && npm test`
 Expected: build + lint clean; all unit tests pass.
 
 - [ ] **Step 5: Commit**

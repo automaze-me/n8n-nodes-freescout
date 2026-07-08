@@ -1,0 +1,55 @@
+{
+  "name": "n8n-nodes-freescout",
+  "version": "0.2.0",
+  "description": "n8n community node for the FreeScout help desk API",
+  "license": "MIT",
+  "homepage": "https://github.com/automaze-me/n8n-nodes-freescout",
+  "keywords": [
+    "n8n-community-node-package",
+    "freescout",
+    "helpdesk"
+  ],
+  "author": {
+    "name": "Jörn Bungartz",
+    "email": "joern@bungartz.pm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/automaze-me/n8n-nodes-freescout.git"
+  },
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "release": "n8n-node release",
+    "prepublishOnly": "n8n-node prerelease",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/FreescoutApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Freescout/Freescout.node.js",
+      "dist/nodes/FreescoutTrigger/FreescoutTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "*",
+    "eslint": "9.32.0",
+    "prettier": "3.6.2",
+    "release-it": "^19.0.4",
+    "typescript": "5.9.2",
+    "vitest": "^4.1.10"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
