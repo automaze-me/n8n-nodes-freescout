@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import type { IExecuteSingleFunctions, IN8nHttpFullResponse, INodeExecutionData } from 'n8n-workflow';
 import { normalizeBaseUrl, buildCustomerObject, embeddedPostReceive } from '../GenericFunctions';
 
 describe('normalizeBaseUrl', () => {
@@ -37,8 +37,8 @@ describe('embeddedPostReceive', () => {
 				},
 				page: {},
 			},
-		} as any;
-		const result = await fn.call({} as any, [], response);
+		} as unknown as IN8nHttpFullResponse;
+		const result = await fn.call({} as unknown as IExecuteSingleFunctions, [] as INodeExecutionData[], response);
 		expect(result).toEqual([{ json: { id: 1 } }, { json: { id: 2 } }]);
 	});
 
@@ -49,8 +49,8 @@ describe('embeddedPostReceive', () => {
 				id: 75,
 				firstName: 'Mark',
 			},
-		} as any;
-		const result = await fn.call({} as any, [], response);
+		} as unknown as IN8nHttpFullResponse;
+		const result = await fn.call({} as unknown as IExecuteSingleFunctions, [] as INodeExecutionData[], response);
 		expect(result).toEqual([{ json: { id: 75, firstName: 'Mark' } }]);
 	});
 
@@ -63,8 +63,8 @@ describe('embeddedPostReceive', () => {
 				},
 				page: {},
 			},
-		} as any;
-		const result = await fn.call({} as any, [], response);
+		} as unknown as IN8nHttpFullResponse;
+		const result = await fn.call({} as unknown as IExecuteSingleFunctions, [] as INodeExecutionData[], response);
 		expect(result).toEqual([]);
 	});
 });
