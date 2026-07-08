@@ -74,7 +74,7 @@ export class FreescoutTrigger implements INodeType {
 			},
 			{
 				displayName:
-					'Signature verification runs only if the "App Key" is set on the credential. Without it, deliveries are accepted unverified.',
+					'Signature verification runs only if the "Webhook Secret Key" is set on the credential. Without it, deliveries are accepted unverified.',
 				name: 'signatureNotice',
 				type: 'notice',
 				default: '',
@@ -130,11 +130,11 @@ export class FreescoutTrigger implements INodeType {
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const req = this.getRequestObject();
 		const credentials = await this.getCredentials('freescoutApi');
-		const appKey = (credentials.appKey as string) ?? '';
+		const webhookSecret = (credentials.webhookSecret as string) ?? '';
 		const signature = req.headers['x-freescout-signature'] as string | undefined;
 		const rawBody = (req.rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}))).toString('utf8');
 
-		if (!verifySignature(rawBody, signature, appKey)) {
+		if (!verifySignature(rawBody, signature, webhookSecret)) {
 			const res = this.getResponseObject();
 			res.status(403).send('Invalid signature');
 			return { noWebhookResponse: true };

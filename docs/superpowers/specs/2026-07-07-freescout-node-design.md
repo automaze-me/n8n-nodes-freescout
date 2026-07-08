@@ -49,13 +49,14 @@ Properties:
 - **FreeScout URL** (`baseUrl`, string, required) — e.g.
   `https://support.example.com`. Trailing slash normalized before use.
 - **API Key** (`apiKey`, string, `password: true`, required).
-- **App Key** (`appKey`, string, `password: true`, optional) — the FreeScout
-  instance's Laravel `APP_KEY` (exact value from `.env`, including any
-  `base64:` prefix). Used **only** by the Trigger node: providing it **enables**
-  webhook signature verification; leaving it blank means the Trigger accepts
-  deliveries unverified. The action node ignores it. Description in the UI
-  explains this. The webhook signing secret is derived as
-  `md5(appKey . 'webhook_key')` (see Trigger section).
+- **Webhook Secret Key** (`webhookSecret`, string, `password: true`, optional) —
+  the **Secret Key** displayed in FreeScout under **Manage → API & Webhooks**.
+  Used **only** by the Trigger node: providing it **enables** webhook signature
+  verification; leaving it blank means the Trigger accepts deliveries unverified.
+  The action node ignores it. This value is used **directly** as the HMAC key —
+  the node does not re-hash it. (FreeScout computes this Secret Key internally as
+  `md5(APP_KEY . 'webhook_key')` and shows the result in the UI, so the raw
+  `APP_KEY` is **not** what the user enters; see Trigger section.)
 
 Auth (declarative generic):
 - Header `X-FreeScout-API-Key = {{$credentials.apiKey}}` (docs-recommended
@@ -139,32 +140,37 @@ Webhook lifecycle (`webhookMethods`), routes confirmed from module
   webhook URL + selected events). No per-webhook secret exists in the API.
 - `delete` → `DELETE /api/webhooks/{id}` on deactivation.
 
-### Signature verification (OPTIONAL — enabled by configuring App Key)
+### Signature verification (OPTIONAL — enabled by configuring the Webhook Secret Key)
 
-Scheme pinned from module source (`Entities/Webhook.php::sign`/`getSecretKey`),
-so no empirical derivation is needed:
+Scheme pinned from module source (`Entities/Webhook.php::sign`/`getSecretKey`
+and the settings view `settings.blade.php` which prints `\Webhook::getSecretKey()`
+as the UI "Secret Key"):
 
 - Header: `X-FreeScout-Signature` (event name also sent in `X-FreeScout-Event`).
 - Value: `base64_encode( hash_hmac('sha1', body, secret, true) )`.
 - `body` = the **raw request body bytes** as received (FreeScout signs
   `json_encode($params)`, i.e. the exact JSON it POSTs — so verifying against
   the raw incoming body avoids any re-encoding mismatch).
-- `secret` = `md5( appKey . 'webhook_key' )`, where `appKey` = `config('app.key')`
-  = the instance's `.env` `APP_KEY` string verbatim (including any `base64:`
-  prefix). This is a **global instance secret**, not per-webhook and not the
-  API key.
+- `secret` = the FreeScout **Secret Key** from Manage → API & Webhooks. FreeScout
+  computes it as `md5( config('app.key') . 'webhook_key' )` and **displays the
+  result** in that UI page. It is a **global instance secret** (not per-webhook,
+  not the API key, and not the raw `APP_KEY`). The node stores this UI value in
+  the `webhookSecret` credential field and uses it **directly** as the HMAC key —
+  it does **not** re-derive/re-hash it. (Earlier design had the node take the raw
+  `APP_KEY` and compute the `md5(...)`, but the UI never exposes `APP_KEY`; it
+  exposes the already-derived Secret Key, so the node consumes that directly.)
 
 Behavior (optional check):
-- **App Key configured** → the trigger reads the raw body, computes the
+- **Secret Key configured** → the trigger reads the raw body, computes the
   expected value, and does a constant-time compare against the header. On
   mismatch or missing header → respond `403` and emit nothing.
-- **App Key not configured** → verification is skipped; deliveries are accepted
+- **Secret Key not configured** → verification is skipped; deliveries are accepted
   unverified. The node documents this trade-off so users understand that
-  omitting the App Key means unauthenticated webhook calls are trusted.
+  omitting the Secret Key means unauthenticated webhook calls are trusted.
 
-Testing: a unit test uses a fixture (known body + APP_KEY → expected header
-value, generated once from the pinned formula) to lock the scheme and catch
-regressions. A second case asserts that with no App Key the delivery is
+Testing: a unit test uses a fixture (known body + secret → expected header value,
+computed with `base64(HMAC-SHA1(body, secret))`) to lock the scheme and catch
+regressions. A second case asserts that with no Secret Key the delivery is
 accepted without verification.
 
 ## Cross-cutting behavior

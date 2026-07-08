@@ -34,13 +34,13 @@ export class FreescoutApi implements ICredentialType {
 			description: 'API key from FreeScout → Manage → API Keys',
 		},
 		{
-			displayName: 'App Key',
-			name: 'appKey',
+			displayName: 'Webhook Secret Key',
+			name: 'webhookSecret',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
 			description:
-				"Your FreeScout instance APP_KEY from its .env (include the 'base64:' prefix). Only used by the FreeScout Trigger node to verify webhook signatures. Leave blank to accept webhook deliveries without signature verification.",
+				'The Secret Key shown in FreeScout under Manage → API & Webhooks. Used only by the FreeScout Trigger node to verify webhook signatures. Leave blank to accept webhook deliveries without signature verification.',
 		},
 	];
 

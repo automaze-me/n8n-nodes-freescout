@@ -1,0 +1,7 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - img [ref=e4]
+    - generic [ref=e6]: light mode (on white)
+  - generic [ref=e7]:
+    - img [ref=e9]
+    - generic [ref=e11]: dark mode (on n8n dark)

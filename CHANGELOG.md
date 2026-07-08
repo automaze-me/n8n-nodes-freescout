@@ -13,5 +13,6 @@
   - **User**: Create, Get, Get Many, Delete
   - **Tag**: Get Many
   - **Webhook**: Create, Get Many, Delete
-- **FreeScout Trigger node** with automatic webhook registration and deletion on workflow activate/deactivate; supports all 12 FreeScout webhook events; optional `X-FreeScout-Signature` HMAC-SHA1 verification (enabled by setting the App Key in the credential).
-- **FreescoutApi credential** with FreeScout URL, API Key, and optional App Key fields; includes a connection test.
+- **FreeScout Trigger node** with automatic webhook registration and deletion on workflow activate/deactivate; supports all 12 FreeScout webhook events; optional `X-FreeScout-Signature` HMAC-SHA1 verification (enabled by setting the Webhook Secret Key from FreeScout's API & Webhooks settings in the credential).
+- **FreescoutApi credential** with FreeScout URL, API Key, and optional Webhook Secret Key fields; includes a connection test.
+- Requires the FreeScout **API & Webhooks** module (paid) on the FreeScout instance.

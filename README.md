@@ -6,6 +6,9 @@ FreeScout is a free, self-hosted, open-source help desk and shared mailbox platf
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
+> ⚠️ **Requires the FreeScout "API & Webhooks" module.**
+> This entire package — every node and operation — talks to the REST API provided by FreeScout's paid [**API & Webhooks** module](https://freescout.net/module/api-webhooks/). It must be purchased and installed and activated on your FreeScout instance, otherwise nothing here will work. The Trigger node additionally relies on that module's webhook feature. Some individual operations need further modules (see [Module Requirements](#module-requirements)).
+
 [Installation](#installation)
 [Credentials](#credentials)
 [Operations](#operations)
@@ -37,7 +40,7 @@ Create a **FreeScout API** credential in n8n with three fields:
 |---|---|---|
 | **FreeScout URL** | Yes | Base URL of your FreeScout instance, e.g. `https://helpdesk.example.com` |
 | **API Key** | Yes | Your personal API key. In FreeScout go to **Manage → API Keys** and create or copy a key. |
-| **App Key** | No | The `APP_KEY` value from your FreeScout server's `.env` file (include the `base64:` prefix if present). Used only by the Trigger node for webhook signature verification. Leave blank to accept webhook deliveries without verification. |
+| **Webhook Secret Key** | No | The **Secret Key** shown in FreeScout under **Manage → API & Webhooks**. Used only by the Trigger node to verify webhook signatures. Leave blank to accept webhook deliveries without verification. |
 
 ---
 
@@ -122,7 +125,9 @@ Create a **FreeScout API** credential in n8n with three fields:
 
 ## Module Requirements
 
-Some operations require optional FreeScout modules to be installed on your FreeScout instance. If a required module is not installed, the FreeScout API will return an error.
+**Required for the whole package:** the [**API & Webhooks**](https://freescout.net/module/api-webhooks/) module (paid) must be installed and activated on your FreeScout instance — it provides the REST API and webhooks that every node and operation depends on.
+
+In addition, some individual operations require further optional FreeScout modules. If a required module is not installed, the FreeScout API will return an error.
 
 | Feature | Required Module |
 |---|---|
@@ -164,10 +169,10 @@ Select one or more of the following events to listen for:
 
 ### Signature verification
 
-FreeScout signs webhook deliveries with an `X-FreeScout-Signature` header using an HMAC-SHA1 hash of the request body keyed with your instance's `APP_KEY`.
+FreeScout signs webhook deliveries with an `X-FreeScout-Signature` header: `base64(HMAC-SHA1(rawBody, secret))`, where `secret` is the **Secret Key** displayed in FreeScout under **Manage → API & Webhooks** (internally this is `md5(APP_KEY + "webhook_key")`, but you only need the value shown in the UI — copy it as-is).
 
-- If you set the **App Key** field in your credential, the Trigger node verifies every incoming delivery and rejects requests with an invalid or missing signature.
-- If you leave **App Key** blank, signature verification is skipped and all deliveries are accepted. Use this only in trusted network environments.
+- If you set the **Webhook Secret Key** field in your credential, the Trigger node verifies every incoming delivery and rejects requests with an invalid or missing signature.
+- If you leave **Webhook Secret Key** blank, signature verification is skipped and all deliveries are accepted. Use this only in trusted network environments.
 
 ---
 
