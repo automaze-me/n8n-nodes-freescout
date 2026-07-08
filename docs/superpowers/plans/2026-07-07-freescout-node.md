@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, `n8n-workflow`, `@n8n/node-cli` (`n8n-node build`/`lint`/`dev`), **Vitest** for unit tests (the runner the official `@n8n/node-cli` standardizes on), Node's `crypto` for HMAC. Node built against `n8nNodesApiVersion: 1`, `strict: true`.
 
-**Test runner:** Vitest. Added as a direct devDependency with `"test": "vitest run"` in `package.json` (Task 2 sets this up). Test files import `{ describe, it, expect } from 'vitest'` (no global-config needed). Build excludes test files (`tsconfig` `exclude`).
+**Test runner:** Vitest, configured for Cloud-eligible strict mode. `n8n.strict` MUST stay `true` and `eslint.config.mjs` MUST remain the default (`export default config;`) — disabling strict forfeits n8n Cloud verification. n8n's lint bans importing `vitest` in any `.ts` file, so tests use **Vitest globals**: a root `vitest.config.mjs` (a `.mjs`, outside the `**/*.ts` lint glob) sets `test.globals: true`, and test files do NOT import from `'vitest'` (they use global `describe`/`it`/`expect`). Test files avoid `any` (use `as unknown as <Type>` with real `n8n-workflow` types). Build excludes test files (`tsconfig` `exclude`). `crypto`/`node:crypto` are allowlisted imports.
 
 ## Global Constraints
 
@@ -2234,7 +2234,7 @@ git commit -m "chore: register both nodes and fix package metadata"
 - [ ] **Step 1: Write failing tests (fixture generated from the pinned formula)**
 
 ```typescript
-import { describe, it, expect } from 'vitest';
+// No `vitest` import — globals are enabled via vitest.config.mjs (strict mode bans the import).
 import { webhookSecret, computeSignature, verifySignature } from '../GenericFunctions';
 import { createHash, createHmac } from 'crypto';
 
