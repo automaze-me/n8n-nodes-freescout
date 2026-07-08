@@ -57,12 +57,12 @@ export const threadCreateDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show },
 		options: [
-			{ displayName: 'Status', name: 'status', type: 'options', options: [{ name: 'Active', value: 'active' }, { name: 'Pending', value: 'pending' }, { name: 'Closed', value: 'closed' }], default: 'active', routing: { send: { type: 'body', property: 'status' } } },
-			{ displayName: 'State', name: 'state', type: 'options', options: [{ name: 'Published', value: 'published' }, { name: 'Draft', value: 'draft' }], default: 'published', routing: { send: { type: 'body', property: 'state' } } },
-			{ displayName: 'CC', name: 'cc', type: 'string', typeOptions: { multipleValues: true }, default: [], routing: { send: { type: 'body', property: 'cc' } } },
-			{ displayName: 'BCC', name: 'bcc', type: 'string', typeOptions: { multipleValues: true }, default: [], routing: { send: { type: 'body', property: 'bcc' } } },
-			{ displayName: 'Imported', name: 'imported', type: 'boolean', default: false, routing: { send: { type: 'body', property: 'imported' } } },
 			{ displayName: 'Attachments (JSON)', name: 'attachments', type: 'json', default: '[]', description: 'Array of { fileName, mimeType, data (base64) or fileUrl }', routing: { send: { type: 'body', property: 'attachments' } } },
+			{ displayName: 'BCC', name: 'bcc', type: 'string', typeOptions: { multipleValues: true }, default: [], routing: { send: { type: 'body', property: 'bcc' } } },
+			{ displayName: 'CC', name: 'cc', type: 'string', typeOptions: { multipleValues: true }, default: [], routing: { send: { type: 'body', property: 'cc' } } },
+			{ displayName: 'Imported', name: 'imported', type: 'boolean', default: false, routing: { send: { type: 'body', property: 'imported' } } },
+			{ displayName: 'State', name: 'state', type: 'options', options: [{ name: 'Published', value: 'published' }, { name: 'Draft', value: 'draft' }], default: 'published', routing: { send: { type: 'body', property: 'state' } } },
+			{ displayName: 'Status', name: 'status', type: 'options', options: [{ name: 'Active', value: 'active' }, { name: 'Pending', value: 'pending' }, { name: 'Closed', value: 'closed' }], default: 'active', routing: { send: { type: 'body', property: 'status' } } },
 		],
 	},
 ];

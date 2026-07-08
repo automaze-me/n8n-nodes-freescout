@@ -14,12 +14,12 @@ export const userCreateDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show },
 		options: [
-			{ displayName: 'Password', name: 'password', type: 'string', typeOptions: { password: true }, default: '', routing: { send: { type: 'body', property: 'password' } } },
-			{ displayName: 'Alternate Emails', name: 'alternateEmails', type: 'string', default: '', description: 'Comma separated', routing: { send: { type: 'body', property: 'alternateEmails' } } },
+			{ displayName: 'Alternate Emails', name: 'alternateEmails', type: 'string', default: '', description: 'Comma-separated', routing: { send: { type: 'body', property: 'alternateEmails' } } },
 			{ displayName: 'Job Title', name: 'jobTitle', type: 'string', default: '', routing: { send: { type: 'body', property: 'jobTitle' } } },
+			{ displayName: 'Password', name: 'password', type: 'string', typeOptions: { password: true }, default: '', routing: { send: { type: 'body', property: 'password' } } },
 			{ displayName: 'Phone', name: 'phone', type: 'string', default: '', routing: { send: { type: 'body', property: 'phone' } } },
-			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '', placeholder: 'Europe/Paris', routing: { send: { type: 'body', property: 'timezone' } } },
 			{ displayName: 'Photo URL', name: 'photoUrl', type: 'string', default: '', routing: { send: { type: 'body', property: 'photoUrl' } } },
+			{ displayName: 'Timezone', name: 'timezone', type: 'string', default: '', placeholder: 'Europe/Paris', routing: { send: { type: 'body', property: 'timezone' } } },
 		],
 	},
 ];

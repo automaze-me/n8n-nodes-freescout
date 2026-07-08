@@ -18,7 +18,7 @@ export const conversationUpdateCustomFieldsDescription: INodeProperties[] = [
 		type: 'json',
 		default: '=[{ "id": 1, "value": "Some text" }]',
 		displayOptions: { show },
-		description: 'Array of { id, value }. Requires the CustomFields FreeScout module.',
+		description: 'Array of { ID, value }. Requires the CustomFields FreeScout module.',
 		routing: { send: { type: 'body', property: 'customFields' } },
 	},
 ];

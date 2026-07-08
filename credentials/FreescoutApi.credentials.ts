@@ -8,6 +8,8 @@ import type {
 export class FreescoutApi implements ICredentialType {
 	name = 'freescoutApi';
 
+	icon = { light: 'file:freescout.svg', dark: 'file:freescout.dark.svg' } as const;
+
 	displayName = 'FreeScout API';
 
 	documentationUrl = 'https://github.com/joernbungartz/n8n-nodes-freescout#credentials';

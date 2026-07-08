@@ -29,10 +29,10 @@ export const conversationUpdateDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show },
 		options: [
-			{ displayName: 'Status', name: 'status', type: 'options', options: [{ name: 'Active', value: 'active' }, { name: 'Pending', value: 'pending' }, { name: 'Closed', value: 'closed' }, { name: 'Spam', value: 'spam' }], default: 'active', routing: { send: { type: 'body', property: 'status' } } },
 			{ displayName: 'Assign To (User ID)', name: 'assignTo', type: 'number', default: 0, routing: { send: { type: 'body', property: 'assignTo' } } },
-			{ displayName: 'Mailbox ID', name: 'mailboxId', type: 'number', default: 0, routing: { send: { type: 'body', property: 'mailboxId' } } },
 			{ displayName: 'Customer ID', name: 'customerId', type: 'number', default: 0, routing: { send: { type: 'body', property: 'customerId' } } },
+			{ displayName: 'Mailbox ID', name: 'mailboxId', type: 'number', default: 0, routing: { send: { type: 'body', property: 'mailboxId' } } },
+			{ displayName: 'Status', name: 'status', type: 'options', options: [{ name: 'Active', value: 'active' }, { name: 'Pending', value: 'pending' }, { name: 'Closed', value: 'closed' }, { name: 'Spam', value: 'spam' }], default: 'active', routing: { send: { type: 'body', property: 'status' } } },
 			{ displayName: 'Subject', name: 'subject', type: 'string', default: '', routing: { send: { type: 'body', property: 'subject' } } },
 		],
 	},

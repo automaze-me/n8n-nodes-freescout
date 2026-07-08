@@ -16,10 +16,10 @@ export const organizationDescription: INodeProperties[] = [
 		displayOptions: { show },
 		options: [
 			{ name: 'Create', value: 'create', action: 'Create an organization' },
+			{ name: 'Delete', value: 'delete', action: 'Delete an organization' },
 			{ name: 'Get', value: 'get', action: 'Get an organization' },
 			{ name: 'Get Many', value: 'getAll', action: 'Get many organizations' },
 			{ name: 'Update', value: 'update', action: 'Update an organization' },
-			{ name: 'Delete', value: 'delete', action: 'Delete an organization' },
 		],
 		default: 'create',
 	},

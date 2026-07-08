@@ -14,7 +14,8 @@ export const userGetAllDescription: INodeProperties[] = [
 		default: {},
 		displayOptions: { show },
 		options: [
-			{ displayName: 'Email', name: 'email', type: 'string', default: '', routing: { send: { type: 'query', property: 'email' } } },
+			{ displayName: 'Email', name: 'email', type: 'string',
+																																										placeholder: 'name@email.com', default: '', routing: { send: { type: 'query', property: 'email' } } },
 		],
 	},
 	{

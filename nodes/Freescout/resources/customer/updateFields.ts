@@ -18,7 +18,7 @@ export const customerUpdateFieldsDescription: INodeProperties[] = [
 		type: 'json',
 		default: '=[{ "id": 1, "value": "Test value" }]',
 		displayOptions: { show },
-		description: 'Array of { id, value }. Requires the CustomFields FreeScout module.',
+		description: 'Array of { ID, value }. Requires the CustomFields FreeScout module.',
 		routing: { send: { type: 'body', property: 'customerFields' } },
 	},
 ];
