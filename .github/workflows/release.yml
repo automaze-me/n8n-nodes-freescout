@@ -67,12 +67,13 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22' # >= 22.14 required by npm trusted publishing
+          # Node 24 bundles npm >= 11.5.1 (required for trusted publishing) as a
+          # complete install. Do NOT `npm install -g npm@latest` — that global
+          # reinstall intermittently leaves npm's provenance dep broken
+          # ("Cannot find module 'sigstore'").
+          node-version: '24'
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Update npm (trusted publishing needs npm >= 11.5.1)
-        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
