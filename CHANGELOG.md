@@ -7,6 +7,8 @@ dated release when a version is cut.
 
 ## [Unreleased]
 
+## 0.2.0 - 2026-07-08
+
 ### Added
 
 - First release. You can now connect n8n to your FreeScout help desk.
