@@ -95,8 +95,10 @@ Load these before working on the relevant area:
 
 ## Releasing
 
-Releases are cut and published entirely from GitHub Actions — never run
-`npm publish` or `npm run release` locally.
+The package is published to npm as **`@automaze.me/n8n-nodes-freescout`** (public,
+scoped under the `automaze.me` npm org). Releases are cut and published entirely
+from GitHub Actions via **OIDC trusted publishing** — no npm tokens. The only
+exception is the one-time first publish (see below).
 
 ### 1. Keep the changelog user-facing
 Every user-visible change must be added to `CHANGELOG.md` under the
@@ -115,8 +117,9 @@ GitHub → Actions → Release → "Run workflow", or with:
 gh workflow run release.yml -f bump=patch    # or minor / major / none
 ```
 
-Use `bump=none` only to release the current `package.json` version as-is (used
-for the very first release); otherwise pick `patch`/`minor`/`major`.
+Use `bump=none` only to release the current `package.json` version as-is;
+otherwise pick `patch`/`minor`/`major`. (The very first version is published
+locally instead — see the npm authentication section below.)
 
 The workflow then, in one run: lints + builds + tests, bumps the version,
 promotes `[Unreleased]` to a dated `## X.Y.Z` heading, **publishes to npm with
@@ -129,12 +132,31 @@ run aborts with the remote untouched — nothing to undo. Do **not** re-run a
 partially-failed release job (it would double-bump); fix the cause and trigger a
 fresh run.
 
-### One-time npm setup (maintainer, on npmjs.com)
-Before the first successful release, add an `NPM_TOKEN` secret: npmjs.com →
-Access Tokens → Generate → **Granular Access Token** with read/write publish
-permission for `n8n-nodes-freescout`, then GitHub → Settings → Secrets and
-variables → Actions → new secret `NPM_TOKEN`. (Once the package exists on npm
-you may switch to OIDC trusted publishing and delete the secret.)
+### npm authentication: OIDC trusted publishing (no tokens)
+The Release workflow authenticates to npm via OIDC — there is **no `NPM_TOKEN`
+secret**. Each run mints a short-lived, workflow-scoped credential and npm
+attaches a provenance attestation automatically.
+
+Trusted publishing can only be configured on a package that already exists on
+npm, so the flow is:
+
+1. **First publish (one-time, local, with 2FA).** Because the package does not
+   exist yet, publish the first version from a maintainer machine:
+   `npm publish` — npm prompts for the account's 2FA one-time code. This respects
+   2FA and stores no token. (A locally published version has no provenance
+   attestation; every later release published by the workflow does.)
+2. **Configure the trusted publisher** on npmjs.com → the package's
+   Settings → Trusted Publisher → GitHub Actions:
+   - Organization/user: `automaze-me` (the **GitHub** org — note the hyphen; the
+     npm org is `automaze.me` with a dot, they are different namespaces)
+   - Repository: `n8n-nodes-freescout`
+   - Workflow filename: `release.yml`
+   - Environment: (leave blank)
+3. **All later releases** go through the Release workflow (OIDC). Never publish
+   locally again.
+
+Requirements the workflow already handles: `id-token: write` permission,
+Node ≥ 22.14, and npm ≥ 11.5.1 (upgraded in-workflow).
 
 ## Additional resources
 If you need any extra information, here are links to n8n's official docs

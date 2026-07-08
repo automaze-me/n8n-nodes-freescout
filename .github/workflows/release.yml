@@ -12,12 +12,23 @@
 # npm publish runs BEFORE anything is pushed, so if npm auth is not set up the run
 # aborts cleanly with the remote untouched — just fix auth and run again.
 #
-# ─── ONE-TIME npm SETUP (required before the first successful release) ──────────
-# Create a granular npm access token (npmjs.com → Access Tokens → Generate →
-# Granular Access Token) with "Read and write" for this package, then add it in
-# GitHub → Settings → Secrets and variables → Actions as a secret named NPM_TOKEN.
-# (Once the package exists on npm you may switch to OIDC trusted publishing and
-# remove the secret; provenance works either way.)
+# ─── npm AUTH: OIDC TRUSTED PUBLISHING (no tokens) ─────────────────────────────
+# This workflow publishes via npm Trusted Publishing (OIDC) — no NPM_TOKEN secret.
+# Each run mints a short-lived, workflow-scoped credential and npm attaches a
+# provenance attestation automatically. Requirements (handled below): the
+# `id-token: write` permission and npm CLI >= 11.5.1.
+#
+# ONE-TIME SETUP (maintainer):
+#   1. The package must already exist on npm. Trusted publishers cannot be
+#      configured for a name that has never been published, so the FIRST version
+#      is published once locally with 2FA (`npm publish`). See AGENTS.md.
+#   2. Then on npmjs.com → the package's Settings → Trusted Publisher → add a
+#      GitHub Actions publisher:
+#          Organization/user: automaze-me
+#          Repository:        n8n-nodes-freescout
+#          Workflow filename: release.yml
+#          Environment:       (leave blank)
+#   No repository secret is needed.
 
 name: Release
 
@@ -56,9 +67,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
+          node-version: '22' # >= 22.14 required by npm trusted publishing
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Update npm (trusted publishing needs npm >= 11.5.1)
+        run: npm install -g npm@latest
 
       - name: Install dependencies
         run: npm ci
@@ -106,13 +120,13 @@ jobs:
           git commit -m "chore(release): $VERSION"
           git tag "$VERSION"
 
-      - name: Publish to npm (with provenance)
-        # Runs BEFORE the push so a missing/invalid token aborts with nothing pushed.
-        # `npm run release` (n8n-node release) lints, builds, and publishes with
-        # NPM_CONFIG_PROVENANCE=true when it detects it is running in GitHub Actions.
+      - name: Publish to npm (OIDC trusted publishing, with provenance)
+        # Runs BEFORE the push so an auth/OIDC failure aborts with nothing pushed.
+        # `npm run release` (n8n-node release) lints, builds, and publishes. With
+        # npm >= 11.5.1 and a trusted publisher configured, npm authenticates via
+        # the OIDC token (id-token: write) and attaches provenance automatically —
+        # no NODE_AUTH_TOKEN / NPM_TOKEN required.
         run: npm run release
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push commit and tag
         run: git push origin HEAD:main --follow-tags
