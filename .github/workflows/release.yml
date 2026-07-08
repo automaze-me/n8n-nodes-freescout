@@ -1,0 +1,125 @@
+# Cuts a release and publishes it to npm — triggered manually from GitHub
+# (Actions → Release → Run workflow) or via `gh workflow run release.yml -f bump=<type>`.
+#
+# It does everything in one run so there is no cross-workflow tag-trigger gotcha:
+#   1. Gates:  lint + build + test.
+#   2. Version: bumps package.json (or releases the current version with bump=none).
+#   3. Notes:   promotes the CHANGELOG "## [Unreleased]" section to a dated heading
+#               and uses that (plain-language) section as the GitHub Release body.
+#   4. Publish: npm publish with provenance.
+#   5. Records: commits the bump + changelog, tags, pushes, creates the GitHub Release.
+#
+# npm publish runs BEFORE anything is pushed, so if npm auth is not set up the run
+# aborts cleanly with the remote untouched — just fix auth and run again.
+#
+# ─── ONE-TIME npm SETUP (required before the first successful release) ──────────
+# Create a granular npm access token (npmjs.com → Access Tokens → Generate →
+# Granular Access Token) with "Read and write" for this package, then add it in
+# GitHub → Settings → Secrets and variables → Actions as a secret named NPM_TOKEN.
+# (Once the package exists on npm you may switch to OIDC trusted publishing and
+# remove the secret; provenance works either way.)
+
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump for this release'
+        type: choice
+        required: true
+        default: patch
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Cut release and publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # push the version commit + tag and create the GitHub Release
+      id-token: write # mint the OIDC token for npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need tags for the "already released" guard
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure git identity
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Lint, build, test
+        run: |
+          npm run lint
+          npm run build
+          npm test
+
+      - name: Bump version
+        id: bump
+        run: |
+          if [ "${{ inputs.bump }}" != "none" ]; then
+            npm version "${{ inputs.bump }}" --no-git-tag-version
+          fi
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Guard against re-releasing an existing version
+        run: |
+          VERSION='${{ steps.bump.outputs.version }}'
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" >/dev/null 2>&1; then
+            echo "::error::Tag $VERSION already exists on the remote. Choose a version bump."
+            exit 1
+          fi
+
+      - name: Promote changelog and extract release notes
+        run: |
+          node .github/scripts/release-changelog.mjs \
+            '${{ steps.bump.outputs.version }}' \
+            '${{ steps.bump.outputs.date }}' \
+            release-notes.md
+
+      - name: Commit and tag
+        run: |
+          VERSION='${{ steps.bump.outputs.version }}'
+          git add package.json package-lock.json CHANGELOG.md
+          git commit -m "chore(release): $VERSION"
+          git tag "$VERSION"
+
+      - name: Publish to npm (with provenance)
+        # Runs BEFORE the push so a missing/invalid token aborts with nothing pushed.
+        # `npm run release` (n8n-node release) lints, builds, and publishes with
+        # NPM_CONFIG_PROVENANCE=true when it detects it is running in GitHub Actions.
+        run: npm run release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Push commit and tag
+        run: git push origin HEAD:main --follow-tags
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION='${{ steps.bump.outputs.version }}'
+          gh release create "$VERSION" --title "$VERSION" --notes-file release-notes.md

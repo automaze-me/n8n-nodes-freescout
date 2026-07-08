@@ -93,6 +93,49 @@ Load these before working on the relevant area:
 | Adding a new version to a node       | `.agents/versioning.md`                                             |
 | Starting a new task or planning      | `.agents/workflow.md`                                               |
 
+## Releasing
+
+Releases are cut and published entirely from GitHub Actions — never run
+`npm publish` or `npm run release` locally.
+
+### 1. Keep the changelog user-facing
+Every user-visible change must be added to `CHANGELOG.md` under the
+`## [Unreleased]` heading, written **for the people using the node**, not for
+developers. Describe *what the user can now do or what changed for them* in
+plain language (no commit hashes, internal function names, or jargon). Group
+entries under `### Added`, `### Changed`, `### Fixed`, or `### Requirements`.
+The release notes shown on GitHub and npm are taken verbatim from this section,
+so if it is empty or too technical, the release will be too.
+
+### 2. Cut the release
+Trigger the **Release** workflow (`.github/workflows/release.yml`), either from
+GitHub → Actions → Release → "Run workflow", or with:
+
+```
+gh workflow run release.yml -f bump=patch    # or minor / major / none
+```
+
+Use `bump=none` only to release the current `package.json` version as-is (used
+for the very first release); otherwise pick `patch`/`minor`/`major`.
+
+The workflow then, in one run: lints + builds + tests, bumps the version,
+promotes `[Unreleased]` to a dated `## X.Y.Z` heading, **publishes to npm with
+provenance**, commits + tags + pushes, and creates the GitHub Release using the
+promoted changelog section as its body. It refuses to run if the version's tag
+already exists or if `[Unreleased]` is empty.
+
+npm publish happens **before** anything is pushed, so if npm auth is missing the
+run aborts with the remote untouched — nothing to undo. Do **not** re-run a
+partially-failed release job (it would double-bump); fix the cause and trigger a
+fresh run.
+
+### One-time npm setup (maintainer, on npmjs.com)
+Before the first successful release, add an `NPM_TOKEN` secret: npmjs.com →
+Access Tokens → Generate → **Granular Access Token** with read/write publish
+permission for `n8n-nodes-freescout`, then GitHub → Settings → Secrets and
+variables → Actions → new secret `NPM_TOKEN`. (Once the package exists on npm
+you may switch to OIDC trusted publishing and delete the secret.)
+
 ## Additional resources
 If you need any extra information, here are links to n8n's official docs
 regarding building community nodes:

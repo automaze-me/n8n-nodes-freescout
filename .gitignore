@@ -4,3 +4,6 @@ node_modules
 # scratch / preview artifacts
 .playwright-mcp/
 fs-icon-preview.png
+
+# ephemeral release notes extracted during the Release workflow
+release-notes.md
