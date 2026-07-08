@@ -4,7 +4,7 @@
 
 ### Added
 
-- **FreeScout action node** covering seven resources with full API coverage:
+- **FreeScout action node** covering eight resources with full API coverage:
   - **Conversation**: Create, Get, Get Many, Update, Delete, Update Tags, Update Custom Fields, Get Timelogs
   - **Thread**: Create (replies, notes, and agent messages)
   - **Customer**: Create, Get, Get Many, Update, Update Customer Fields, Get Organization, Set Organization, Remove Organization
