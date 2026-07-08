@@ -1,5 +1,11 @@
 import type { IExecuteSingleFunctions, IN8nHttpFullResponse, INodeExecutionData } from 'n8n-workflow';
-import { normalizeBaseUrl, buildCustomerObject, embeddedPostReceive } from '../GenericFunctions';
+import {
+	normalizeBaseUrl,
+	buildCustomerObject,
+	embeddedPostReceive,
+	buildThread,
+	buildThreadsFromUi,
+} from '../GenericFunctions';
 
 describe('normalizeBaseUrl', () => {
 	it('strips a single trailing slash', () => {
@@ -67,5 +73,85 @@ describe('embeddedPostReceive', () => {
 		} as unknown as IN8nHttpFullResponse;
 		const result = await fn.call({} as unknown as IExecuteSingleFunctions, [] as INodeExecutionData[], response);
 		expect(result).toEqual([{ json: { id: 5, subject: 'Hi', _embedded: { threads: [{ id: 9 }] } } }]);
+	});
+});
+
+describe('buildThread', () => {
+	it('builds a message thread with user, omitting empty extras', () => {
+		expect(buildThread({ type: 'message', text: 'Hi', user: 7 })).toEqual({
+			type: 'message',
+			text: 'Hi',
+			user: 7,
+		});
+	});
+
+	it('builds a note thread with user', () => {
+		expect(buildThread({ type: 'note', text: 'internal', user: 3 })).toEqual({
+			type: 'note',
+			text: 'internal',
+			user: 3,
+		});
+	});
+
+	it('omits user when not a positive number (message/note)', () => {
+		expect(buildThread({ type: 'message', text: 'Hi', user: 0 })).toEqual({
+			type: 'message',
+			text: 'Hi',
+		});
+	});
+
+	it('builds a customer thread with a nested customer email', () => {
+		expect(buildThread({ type: 'customer', text: 'Reply', customerEmail: 'm@x.io' })).toEqual({
+			type: 'customer',
+			text: 'Reply',
+			customer: { email: 'm@x.io' },
+		});
+	});
+
+	it('omits customer when no email given (falls back to conversation customer server-side)', () => {
+		expect(buildThread({ type: 'customer', text: 'Reply', customerEmail: '' })).toEqual({
+			type: 'customer',
+			text: 'Reply',
+		});
+	});
+
+	it('includes state, imported and non-empty cc/bcc', () => {
+		expect(
+			buildThread({
+				type: 'message',
+				text: 'Hi',
+				user: 1,
+				state: 'draft',
+				imported: true,
+				cc: ['a@x.io'],
+				bcc: [],
+			}),
+		).toEqual({
+			type: 'message',
+			text: 'Hi',
+			user: 1,
+			state: 'draft',
+			imported: true,
+			cc: ['a@x.io'],
+		});
+	});
+});
+
+describe('buildThreadsFromUi', () => {
+	it('maps each collection entry to a thread', () => {
+		const ui = {
+			thread: [
+				{ type: 'message', text: 'First', user: 1 },
+				{ type: 'note', text: 'Second', user: 2 },
+			],
+		};
+		expect(buildThreadsFromUi(ui)).toEqual([
+			{ type: 'message', text: 'First', user: 1 },
+			{ type: 'note', text: 'Second', user: 2 },
+		]);
+	});
+
+	it('returns an empty array when there are no entries', () => {
+		expect(buildThreadsFromUi({})).toEqual([]);
 	});
 });

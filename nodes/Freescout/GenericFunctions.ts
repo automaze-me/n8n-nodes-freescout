@@ -5,6 +5,7 @@ import type {
 	IN8nHttpFullResponse,
 	INodeExecutionData,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 export function normalizeBaseUrl(url: string): string {
 	return (url ?? '').replace(/\/+$/, '');
@@ -45,7 +46,36 @@ export function embeddedPostReceive(key: string) {
 	};
 }
 
-/** Assemble the create-conversation body from flat node parameters. */
+/**
+ * Build a single FreeScout thread object from a "Threads" fixedCollection entry.
+ * Only meaningful fields are emitted; empties are dropped so the API gets a clean
+ * payload (`user` is only sent for message/note when > 0; `customer` only when an
+ * email is given; `cc`/`bcc` only when non-empty).
+ */
+export function buildThread(entry: IDataObject): IDataObject {
+	const thread: IDataObject = { type: entry.type, text: entry.text };
+	if (entry.type === 'customer') {
+		const email = ((entry.customerEmail as string) ?? '').trim();
+		if (email) thread.customer = { email };
+	} else if (typeof entry.user === 'number' && entry.user > 0) {
+		thread.user = entry.user;
+	}
+	if (entry.state) thread.state = entry.state;
+	if (entry.imported === true) thread.imported = true;
+	for (const key of ['cc', 'bcc'] as const) {
+		const value = entry[key];
+		if (Array.isArray(value) && value.length) thread[key] = value;
+	}
+	return thread;
+}
+
+/** Build the FreeScout `threads` array from the "Threads" fixedCollection value. */
+export function buildThreadsFromUi(threadsUi: IDataObject): IDataObject[] {
+	const entries = (threadsUi?.thread as IDataObject[]) ?? [];
+	return entries.map(buildThread);
+}
+
+/** Assemble the create-conversation body: nested customer + the threads array. */
 export async function presendConversationBody(
 	this: IExecuteSingleFunctions,
 	requestOptions: IHttpRequestOptions,
@@ -53,6 +83,29 @@ export async function presendConversationBody(
 	const body = (requestOptions.body as IDataObject) ?? {};
 	const customer = buildCustomerObject((body.customer as IDataObject) ?? {});
 	if (Object.keys(customer).length) body.customer = customer;
+
+	const mode = (this.getNodeParameter('threadInputMode', 'fields') as string) || 'fields';
+	if (mode === 'json') {
+		const raw = this.getNodeParameter('threadsJson', []) as string | IDataObject[];
+		try {
+			body.threads = typeof raw === 'string' ? JSON.parse(raw) : raw;
+		} catch (error) {
+			throw new NodeOperationError(
+				this.getNode(),
+				`Invalid JSON in "Threads (JSON)": ${(error as Error).message}`,
+			);
+		}
+	} else {
+		body.threads = buildThreadsFromUi(this.getNodeParameter('threadsUi', {}) as IDataObject);
+	}
+
+	if (!Array.isArray(body.threads) || body.threads.length === 0) {
+		throw new NodeOperationError(
+			this.getNode(),
+			'A conversation requires at least one thread. Add a thread before running.',
+		);
+	}
+
 	requestOptions.body = pruneEmpty(body);
 	return requestOptions;
 }

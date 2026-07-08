@@ -49,16 +49,119 @@ export const conversationCreateDescription: INodeProperties[] = [
 		description: 'Email of the customer; a customer is created if none matches',
 	},
 	{
-		displayName: 'Threads',
-		name: 'threads',
-		type: 'json',
-		default:
-			'=[{ "text": "Message body", "type": "message", "user": 1 }]',
-		required: true,
+		displayName: 'Thread Input',
+		name: 'threadInputMode',
+		type: 'options',
+		noDataExpression: true,
+		options: [
+			{ name: 'Fields', value: 'fields', description: 'Define threads with the fields below' },
+			{ name: 'JSON', value: 'json', description: 'Provide a raw threads array as JSON' },
+		],
+		default: 'fields',
 		displayOptions: { show },
-		routing: { send: { type: 'body', property: 'threads' } },
+		description: "How to define the conversation's initial thread(s)",
+	},
+	{
+		displayName: 'Threads',
+		name: 'threadsUi',
+		type: 'fixedCollection',
+		typeOptions: { multipleValues: true, sortable: true },
+		placeholder: 'Add Thread',
+		default: {},
+		displayOptions: { show: { ...show, threadInputMode: ['fields'] } },
+		description: 'At least one thread is required. The newest thread goes first.',
+		options: [
+			{
+				name: 'thread',
+				displayName: 'Thread',
+				// Fields are kept alphabetical by displayName to satisfy the n8n
+				// lint rule (node-param-fixed-collection-type-unsorted-items).
+				// NOTE: do not run `n8n-node lint --fix` on this file — its
+				// fixed-collection sort fixer is destructive (it strips
+				// displayOptions/typeOptions from these entries).
+				values: [
+					{
+						displayName: 'BCC',
+						name: 'bcc',
+						type: 'string',
+						typeOptions: { multipleValues: true },
+						default: [],
+						description: 'BCC email addresses',
+					},
+					{
+						displayName: 'CC',
+						name: 'cc',
+						type: 'string',
+						typeOptions: { multipleValues: true },
+						default: [],
+						description: 'CC email addresses',
+					},
+					{
+						displayName: 'Customer Email',
+						name: 'customerEmail',
+						type: 'string',
+						placeholder: 'name@email.com',
+						default: '',
+						displayOptions: { show: { type: ['customer'] } },
+						description:
+							'Customer sending the reply; defaults to the conversation customer if left blank',
+					},
+					{
+						displayName: 'Imported',
+						name: 'imported',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to suppress outgoing emails and notifications for this thread',
+					},
+					{
+						displayName: 'State',
+						name: 'state',
+						type: 'options',
+						options: [
+							{ name: 'Published', value: 'published' },
+							{ name: 'Draft', value: 'draft' },
+						],
+						default: 'published',
+					},
+					{
+						displayName: 'Text',
+						name: 'text',
+						type: 'string',
+						typeOptions: { rows: 3 },
+						default: '',
+						description: 'The thread body',
+					},
+					{
+						displayName: 'Type',
+						name: 'type',
+						type: 'options',
+						options: [
+							{ name: 'Message (User Reply)', value: 'message' },
+							{ name: 'Note (Internal Note)', value: 'note' },
+							{ name: 'Customer (Customer Reply)', value: 'customer' },
+						],
+						default: 'message',
+					},
+					{
+						displayName: 'User ID',
+						name: 'user',
+						type: 'number',
+						default: 0,
+						displayOptions: { show: { type: ['message', 'note'] } },
+						description: 'ID of the agent adding the thread (required for message/note)',
+					},
+				],
+			},
+		],
+	},
+	{
+		displayName: 'Threads (JSON)',
+		name: 'threadsJson',
+		type: 'json',
+		default: '=[{ "text": "Message body", "type": "message", "user": 1 }]',
+		displayOptions: { show: { ...show, threadInputMode: ['json'] } },
 		description:
-			'Array of threads (newest first). Each: {text, type: customer|message|note, user or customer}.',
+			'Raw threads array (newest first). Each: {text, type: customer|message|note, user or customer}.',
 	},
 	{
 		displayName: 'Additional Fields',
