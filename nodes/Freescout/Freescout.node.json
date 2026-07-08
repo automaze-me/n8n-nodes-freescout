@@ -6,12 +6,12 @@
 	"resources": {
 		"credentialDocumentation": [
 			{
-				"url": "https://github.com/joernbungartz/n8n-nodes-freescout?tab=readme-ov-file#credentials"
+				"url": "https://github.com/automaze-me/n8n-nodes-freescout?tab=readme-ov-file#credentials"
 			}
 		],
 		"primaryDocumentation": [
 			{
-				"url": "https://github.com/joernbungartz/n8n-nodes-freescout?tab=readme-ov-file"
+				"url": "https://github.com/automaze-me/n8n-nodes-freescout?tab=readme-ov-file"
 			}
 		]
 	}

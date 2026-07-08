@@ -182,7 +182,7 @@ This node package has been built and tested against n8n version 1.x. No minimum 
 - [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
 - [FreeScout documentation](https://github.com/freescout-help-desk/freescout/wiki)
 - [FreeScout API reference](https://api-docs.freescout.net/)
-- [Source code](https://github.com/joernbungartz/n8n-nodes-freescout)
+- [Source code](https://github.com/automaze-me/n8n-nodes-freescout)
 
 ---
 

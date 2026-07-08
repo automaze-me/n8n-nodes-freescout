@@ -12,7 +12,7 @@ export class FreescoutApi implements ICredentialType {
 
 	displayName = 'FreeScout API';
 
-	documentationUrl = 'https://github.com/joernbungartz/n8n-nodes-freescout#credentials';
+	documentationUrl = 'https://github.com/automaze-me/n8n-nodes-freescout#credentials';
 
 	properties: INodeProperties[] = [
 		{

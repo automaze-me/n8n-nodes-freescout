@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "n8n community node for the FreeScout help desk API",
   "license": "MIT",
-  "homepage": "https://github.com/joernbungartz/n8n-nodes-freescout",
+  "homepage": "https://github.com/automaze-me/n8n-nodes-freescout",
   "keywords": [
     "n8n-community-node-package",
     "freescout",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/joernbungartz/n8n-nodes-freescout.git"
+    "url": "git+https://github.com/automaze-me/n8n-nodes-freescout.git"
   },
   "scripts": {
     "build": "n8n-node build",
