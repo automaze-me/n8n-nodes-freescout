@@ -60,10 +60,13 @@ export function buildThread(entry: IDataObject): IDataObject {
 	} else if (typeof entry.user === 'number' && entry.user > 0) {
 		thread.user = entry.user;
 	}
-	if (entry.state) thread.state = entry.state;
-	if (entry.imported === true) thread.imported = true;
+	// State / CC / BCC / Imported live in a per-thread "Options" collection
+	// (the "Add option" button), so they are only present when the user added them.
+	const opts = (entry.options as IDataObject) ?? {};
+	if (opts.state) thread.state = opts.state;
+	if (opts.imported === true) thread.imported = true;
 	for (const key of ['cc', 'bcc'] as const) {
-		const value = entry[key];
+		const value = opts[key];
 		if (Array.isArray(value) && value.length) thread[key] = value;
 	}
 	return thread;

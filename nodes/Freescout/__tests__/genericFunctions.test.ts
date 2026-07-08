@@ -115,16 +115,18 @@ describe('buildThread', () => {
 		});
 	});
 
-	it('includes state, imported and non-empty cc/bcc', () => {
+	it('includes state, imported and non-empty cc/bcc from the options collection', () => {
 		expect(
 			buildThread({
 				type: 'message',
 				text: 'Hi',
 				user: 1,
-				state: 'draft',
-				imported: true,
-				cc: ['a@x.io'],
-				bcc: [],
+				options: {
+					state: 'draft',
+					imported: true,
+					cc: ['a@x.io'],
+					bcc: [],
+				},
 			}),
 		).toEqual({
 			type: 'message',
@@ -133,6 +135,14 @@ describe('buildThread', () => {
 			state: 'draft',
 			imported: true,
 			cc: ['a@x.io'],
+		});
+	});
+
+	it('omits optional fields when no options are added', () => {
+		expect(buildThread({ type: 'message', text: 'Hi', user: 1 })).toEqual({
+			type: 'message',
+			text: 'Hi',
+			user: 1,
 		});
 	});
 });

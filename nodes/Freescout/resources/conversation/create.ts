@@ -81,22 +81,6 @@ export const conversationCreateDescription: INodeProperties[] = [
 				// displayOptions/typeOptions from these entries).
 				values: [
 					{
-						displayName: 'BCC',
-						name: 'bcc',
-						type: 'string',
-						typeOptions: { multipleValues: true },
-						default: [],
-						description: 'BCC email addresses',
-					},
-					{
-						displayName: 'CC',
-						name: 'cc',
-						type: 'string',
-						typeOptions: { multipleValues: true },
-						default: [],
-						description: 'CC email addresses',
-					},
-					{
 						displayName: 'Customer Email',
 						name: 'customerEmail',
 						type: 'string',
@@ -107,21 +91,47 @@ export const conversationCreateDescription: INodeProperties[] = [
 							'Customer sending the reply; defaults to the conversation customer if left blank',
 					},
 					{
-						displayName: 'Imported',
-						name: 'imported',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to suppress outgoing emails and notifications for this thread',
-					},
-					{
-						displayName: 'State',
-						name: 'state',
-						type: 'options',
+						displayName: 'Options',
+						name: 'options',
+						type: 'collection',
+						placeholder: 'Add option',
+						default: {},
 						options: [
-							{ name: 'Published', value: 'published' },
-							{ name: 'Draft', value: 'draft' },
+							{
+								displayName: 'BCC',
+								name: 'bcc',
+								type: 'string',
+								typeOptions: { multipleValues: true },
+								default: [],
+								description: 'BCC email addresses',
+							},
+							{
+								displayName: 'CC',
+								name: 'cc',
+								type: 'string',
+								typeOptions: { multipleValues: true },
+								default: [],
+								description: 'CC email addresses',
+							},
+							{
+								displayName: 'Imported',
+								name: 'imported',
+								type: 'boolean',
+								default: false,
+								description:
+									'Whether to suppress outgoing emails and notifications for this thread',
+							},
+							{
+								displayName: 'State',
+								name: 'state',
+								type: 'options',
+								options: [
+									{ name: 'Published', value: 'published' },
+									{ name: 'Draft', value: 'draft' },
+								],
+								default: 'published',
+							},
 						],
-						default: 'published',
 					},
 					{
 						displayName: 'Text',
