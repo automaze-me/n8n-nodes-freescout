@@ -95,10 +95,13 @@ Load these before working on the relevant area:
 
 ## Releasing
 
-The package is published to npm as **`@automaze.me/n8n-nodes-freescout`** (public,
-scoped under the `automaze.me` npm org). Releases are cut and published entirely
-from GitHub Actions via **OIDC trusted publishing** — no npm tokens. The only
-exception is the one-time first publish (see below).
+The package is published to npm as **`n8n-nodes-freescout`** (unscoped, public).
+Note: it must NOT be published under a scope containing a dot (e.g.
+`@automaze.me/...`) — n8n splits node type identifiers on `.`, so a dotted scope
+makes n8n mis-parse the package and fail with "Unrecognized node type". Releases
+are cut and published entirely from GitHub Actions via **OIDC trusted
+publishing** — no npm tokens. The only exception is the one-time first publish
+(see below).
 
 ### 1. Keep the changelog user-facing
 Every user-visible change must be added to `CHANGELOG.md` under the

@@ -1,11 +1,8 @@
 {
-  "name": "@automaze.me/n8n-nodes-freescout",
-  "version": "0.2.1",
+  "name": "n8n-nodes-freescout",
+  "version": "0.2.2",
   "description": "n8n community node for the FreeScout help desk API",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
   "homepage": "https://github.com/automaze-me/n8n-nodes-freescout",
   "keywords": [
     "n8n-community-node-package",

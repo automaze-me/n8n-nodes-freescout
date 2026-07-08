@@ -27,7 +27,7 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 In n8n, go to **Settings → Community Nodes → Install** and enter:
 
 ```
-@automaze.me/n8n-nodes-freescout
+n8n-nodes-freescout
 ```
 
 ---
