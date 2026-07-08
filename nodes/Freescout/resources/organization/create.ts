@@ -4,6 +4,7 @@ import type {
 	IHttpRequestOptions,
 	INodeProperties,
 } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 const show = { resource: ['organization'], operation: ['create'] };
 
@@ -15,7 +16,15 @@ export async function presendOrganizationJson(
 	const raw = this.getNodeParameter('additionalFieldsJson', '{}') as string;
 	const body = (requestOptions.body as IDataObject) ?? {};
 	if (raw && raw.trim() && raw.trim() !== '{}') {
-		const parsed = JSON.parse(raw) as IDataObject;
+		let parsed: IDataObject;
+		try {
+			parsed = JSON.parse(raw) as IDataObject;
+		} catch (err) {
+			throw new NodeOperationError(
+				this.getNode(),
+				`Invalid JSON in "Additional Fields (JSON)": ${(err as Error).message}`,
+			);
+		}
 		requestOptions.body = { ...body, ...parsed };
 	}
 	return requestOptions;

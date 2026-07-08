@@ -54,17 +54,18 @@ describe('embeddedPostReceive', () => {
 		expect(result).toEqual([{ json: { id: 75, firstName: 'Mark' } }]);
 	});
 
-	it('returns empty array when _embedded exists but key is absent', async () => {
+	it('passes single-resource GET with embedded sub-resources through as whole object', async () => {
 		const fn = embeddedPostReceive('conversations');
 		const response = {
 			body: {
+				id: 5,
+				subject: 'Hi',
 				_embedded: {
-					other: [],
+					threads: [{ id: 9 }],
 				},
-				page: {},
 			},
 		} as unknown as IN8nHttpFullResponse;
 		const result = await fn.call({} as unknown as IExecuteSingleFunctions, [] as INodeExecutionData[], response);
-		expect(result).toEqual([]);
+		expect(result).toEqual([{ json: { id: 5, subject: 'Hi', _embedded: { threads: [{ id: 9 }] } } }]);
 	});
 });

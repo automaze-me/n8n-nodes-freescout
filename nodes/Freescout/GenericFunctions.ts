@@ -40,9 +40,7 @@ export function embeddedPostReceive(key: string) {
 		if (Array.isArray(list)) {
 			return (list as IDataObject[]).map((json) => ({ json }));
 		}
-		if (body && typeof body === 'object' && '_embedded' in body) {
-			return [];
-		}
+		// Single-resource GETs (possibly carrying _embedded sub-resources) pass through as the whole object.
 		return [{ json: body ?? {} }];
 	};
 }
