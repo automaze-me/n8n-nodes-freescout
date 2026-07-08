@@ -7,6 +7,10 @@ dated release when a version is cut.
 
 ## [Unreleased]
 
+### Added
+
+- The **FreeScout Trigger** now includes the triggering **event** (e.g. `convo.note.created`) as an `event` field on the output item, so workflows can tell which event fired and branch on it.
+
 ## 0.2.2 - 2026-07-08
 
 ### Changed

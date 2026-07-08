@@ -140,6 +140,11 @@ export class FreescoutTrigger implements INodeType {
 			return { noWebhookResponse: true };
 		}
 
-		return { workflowData: [this.helpers.returnJsonArray(this.getBodyData())] };
+		// FreeScout sends the triggering event in the X-FreeScout-Event header
+		// (e.g. "convo.note.created"), not in the body. Surface it as a top-level
+		// `event` field alongside the entity payload so workflows can branch on it.
+		const event = (req.headers['x-freescout-event'] as string) ?? '';
+		const body = this.getBodyData() as IDataObject;
+		return { workflowData: [this.helpers.returnJsonArray({ event, ...body })] };
 	}
 }
